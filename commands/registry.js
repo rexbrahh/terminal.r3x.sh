@@ -4,6 +4,7 @@ import { CatCommand } from './cat.js';
 import { PwdCommand } from './pwd.js';
 import { ClearCommand } from './clear.js';
 import { HelpCommand } from './help.js';
+import { StartCommand } from './start.js';
 
 export class CommandRegistry {
     constructor(terminal) {
@@ -19,6 +20,7 @@ export class CommandRegistry {
         this.register('pwd', new PwdCommand(this.terminal));
         this.register('clear', new ClearCommand(this.terminal));
         this.register('help', new HelpCommand(this.terminal));
+        this.register('start', new StartCommand(this.terminal));
         
         // Aliases
         this.register('ll', new LsCommand(this.terminal, { detailed: true }));
