@@ -65,26 +65,26 @@ class TerminalSite {
     });
 
     // Write each line separately with proper carriage returns
-    this.term.writeln(
-      "\x1b[32m           ████████                         █████     ",
-    );
-    this.term.writeln("          ███░░░░███                       ░░███      ");
-    this.term.writeln("████████ ░░░    ░███ █████ █████     █████  ░███████  ");
-    this.term.writeln(
-      "░░███░░███   ██████░ ░░███ ░░███     ███░░   ░███░░███ ",
-    );
-    this.term.writeln(
-      " ░███ ░░░   ░░░░░░███ ░░░█████░     ░░█████  ░███ ░███ ",
-    );
-    this.term.writeln(
-      " ░███      ███   ░███  ███░░░███     ░░░░███ ░███ ░███ ",
-    );
-    this.term.writeln(
-      " █████    ░░████████  █████ █████ ██ ██████  ████ █████",
-    );
-    this.term.writeln(
-      "░░░░░      ░░░░░░░░  ░░░░░ ░░░░░ ░░ ░░░░░░  ░░░░ ░░░░░\x1b[0m",
-    );
+    //this.term.writeln(
+    //  "\x1b[32m           ████████                         █████     ",
+    //);
+    //this.term.writeln("          ███░░░░███                       ░░███      ");
+    //this.term.writeln("████████ ░░░    ░███ █████ █████     █████  ░███████  ");
+    //this.term.writeln(
+    //  "░░███░░███   ██████░ ░░███ ░░███     ███░░   ░███░░███ ",
+    //);
+    //this.term.writeln(
+    //  " ░███ ░░░   ░░░░░░███ ░░░█████░     ░░█████  ░███ ░███ ",
+    //);
+    //this.term.writeln(
+    //  " ░███      ███   ░███  ███░░░███     ░░░░███ ░███ ░███ ",
+    //);
+    //this.term.writeln(
+    //  " █████    ░░████████  █████ █████ ██ ██████  ████ █████",
+    //);
+    //this.term.writeln(
+    // "░░░░░      ░░░░░░░░  ░░░░░ ░░░░░ ░░ ░░░░░░  ░░░░ ░░░░░\x1b[0m",
+    //);
     this.term.writeln("");
     //this.term.writeln('Welcome to terminal.r3x.sh v1.0.0');
     this.term.writeln(`Last login: ${dateStr}`);
