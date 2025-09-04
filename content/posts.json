@@ -1,0 +1,28 @@
+{
+  "posts": [
+    {
+      "id": "hello-world",
+      "title": "Hello, World!",
+      "date": "2024-01-15",
+      "slug": "2024-01-15-hello-world",
+      "excerpt": "Welcome to my terminal-based blog. This is where I share thoughts on technology, programming, and the intersection of both with everyday life.",
+      "tags": ["introduction", "meta"]
+    },
+    {
+      "id": "building-terminal-ui",
+      "title": "Building a Terminal UI for the Modern Web",
+      "date": "2024-02-20",
+      "slug": "2024-02-20-building-terminal-ui",
+      "excerpt": "How do you create a terminal interface that feels authentic yet remains accessible to modern web users? This post explores the technical decisions behind terminal.r3x.sh.",
+      "tags": ["technical", "web-development", "terminal"]
+    },
+    {
+      "id": "unix-philosophy",
+      "title": "Embracing the Unix Philosophy in Web Development",
+      "date": "2024-03-10",
+      "slug": "2024-03-10-unix-philosophy",
+      "excerpt": "The Unix philosophy teaches us powerful lessons applicable far beyond terminal commands. At its core: 'Do one thing and do it well.'",
+      "tags": ["philosophy", "unix", "development"]
+    }
+  ]
+}

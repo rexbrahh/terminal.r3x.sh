@@ -1,0 +1,21 @@
+{
+  "name": "terminal.r3x.sh",
+  "version": "1.0.0",
+  "description": "Unix-like terminal interface for web browsing",
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "serve": "npx serve ."
+  },
+  "keywords": [
+    "terminal",
+    "web-terminal",
+    "unix",
+    "command-line",
+    "portfolio"
+  ],
+  "author": "Rex Liu",
+  "license": "MIT",
+  "devDependencies": {},
+  "dependencies": {}
+}
