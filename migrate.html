@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Migration - terminal.r3x.sh</title>
+    <style>
+        body {
+            font-family: 'Consolas', 'Courier New', monospace;
+            background: #0c0c0c;
+            color: #00ff00;
+            padding: 20px;
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { color: #00ffff; }
+        .status {
+            border: 1px solid #333;
+            padding: 15px;
+            margin: 20px 0;
+            background: #111;
+        }
+        button {
+            background: #333;
+            color: #00ff00;
+            border: 1px solid #555;
+            padding: 10px 20px;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #555;
+        }
+        .error { color: #ff5555; }
+        .success { color: #55ff55; }
+        .warning { color: #ffaa55; }
+    </style>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Content Migration Tool</h1>
+        <p>This tool migrates content from the static filesystem.js to the new database-driven architecture.</p>
+        
+        <div class="status" id="status">
+            <p>Ready to migrate. Click the button below to start.</p>
+        </div>
+        
+        <button onclick="runMigration()">🚀 Start Migration</button>
+        
+        <h2>Instructions:</h2>
+        <ol>
+            <li>Make sure your Supabase database has the site_content table created</li>
+            <li>Click "Start Migration" to populate the database with existing content</li>
+            <li>Check the console for detailed migration logs</li>
+            <li>Once complete, the new database-driven filesystem will be ready</li>
+        </ol>
+    </div>
+
+    <script type="module">
+        import { ContentMigrator } from './migrations/migrate_to_database.js';
+        
+        window.runMigration = async function() {
+            const statusDiv = document.getElementById('status');
+            const migrator = new ContentMigrator();
+            
+            try {
+                statusDiv.innerHTML = '<p class="warning">🔄 Migration in progress... Check console for details.</p>';
+                
+                await migrator.migrate();
+                
+                statusDiv.innerHTML = `
+                    <p class="success">✅ Migration completed successfully!</p>
+                    <p>Migrated ${migrator.migrated.length} items to database.</p>
+                    <p>You can now use the new database-driven terminal.</p>
+                `;
+                
+            } catch (error) {
+                console.error('Migration failed:', error);
+                statusDiv.innerHTML = `
+                    <p class="error">❌ Migration failed: ${error.message}</p>
+                    <p>Check the console for more details.</p>
+                `;
+            }
+        };
+    </script>
+</body>
+</html>

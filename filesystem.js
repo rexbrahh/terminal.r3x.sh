@@ -195,7 +195,7 @@ Sometimes the old ways are the best ways. The Unix philosophy has survived for o
             },
             '/blogs': {
                 type: 'directory',
-                children: ['README.md', 'categories.md', 'archive.md', '2024-01-15-hello-world.md', '2024-02-20-building-terminal-ui.md', '2024-03-10-unix-philosophy.md'],
+                children: ['README.md'], // Only static files, dynamic posts will be added by ls command
                 permissions: 'drwxr-xr-x',
                 modified: new Date()
             },
