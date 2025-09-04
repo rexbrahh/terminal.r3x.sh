@@ -45,6 +45,9 @@ class BootSequence {
         return;
       }
 
+      // Clear screen after loading animation
+      this.terminal.clear();
+
       // Typewriter welcome message with line breaks
       await this.typewriterEffect("Hello, visitor.");
       if (!this.isSkipped) {
@@ -147,9 +150,10 @@ class BootSequence {
       }
     }
 
-    // Move to next line
+    // Clear the entire loading line
     if (!this.isSkipped) {
-      this.terminal.writeln("");
+      // Move cursor to beginning of line and clear it
+      this.terminal.write("\r\x1b[K");
     }
   }
 
