@@ -7,7 +7,7 @@ class TerminalSite {
         this.fitAddon = null;
         this.fs = new FileSystem();
         this.commands = new CommandRegistry(this);
-        this.currentPath = '/home';
+        this.currentPath = '/';
         this.commandHistory = [];
         this.historyIndex = -1;
         this.currentLine = '';
