@@ -48,7 +48,7 @@ class BootSequence {
       // Typewriter welcome message with line breaks
       await this.typewriterEffect("Hello, visitor.");
       if (!this.isSkipped) {
-        await this.blinkCursor(3); // Blink cursor 3 times
+        await this.blinkCursorRandom(); // Random 1-10 blinks
         this.terminal.write(" "); // Space before next sentence
       }
 
@@ -61,7 +61,7 @@ class BootSequence {
         "You are now visiting Rex's personal website.",
       );
       if (!this.isSkipped) {
-        await this.blinkCursor(4); // Blink cursor 4 times
+        await this.blinkCursorRandom(); // Random 1-10 blinks
         this.terminal.writeln(""); // New line
       }
 
@@ -72,7 +72,7 @@ class BootSequence {
 
       await this.typewriterEffect("Here are some tips to get started:");
       if (!this.isSkipped) {
-        await this.blinkCursor(3); // Blink cursor 3 times
+        await this.blinkCursorRandom(); // Random 1-10 blinks
         this.terminal.writeln(""); // New line
       }
 
@@ -151,6 +151,12 @@ class BootSequence {
     if (!this.isSkipped) {
       this.terminal.writeln("");
     }
+  }
+
+  async blinkCursorRandom() {
+    // Random number of blinks between 1 and 10
+    const times = Math.floor(Math.random() * 10) + 1;
+    await this.blinkCursor(times);
   }
 
   async blinkCursor(times) {
