@@ -178,38 +178,91 @@ class BootSequence {
   }
 
   async typewriterEffect(text) {
+    let consecutiveFast = 0; // Track consecutive fast chars for bursts
+    let lastWasSpace = false;
+    
     for (let i = 0; i < text.length && !this.isSkipped; i++) {
       this.terminal.write(text[i]);
 
-      let delay;
-
-      // Don't add delay after the last character (period pause handled separately)
+      // Don't add delay after the last character
       if (i === text.length - 1) {
         continue;
       }
 
-      if (text[i] === " ") {
-        // Slightly shorter for spaces (60-100ms)
-        delay = 60 + Math.random() * 40;
+      let delay;
+      const currentChar = text[i];
+      const nextChar = text[i + 1] || '';
+      const prevChar = text[i - 1] || '';
+
+      // Check for common patterns
+      const isCommonPair = this.isCommonLetterPair(currentChar + nextChar);
+      const isStartOfWord = lastWasSpace && currentChar !== ' ';
+      const isCapital = currentChar >= 'A' && currentChar <= 'Z';
+      
+      // Occasional mid-word pause (thinking)
+      const shouldPauseMidWord = Math.random() < 0.05 && !lastWasSpace && currentChar !== ' ';
+      
+      if (shouldPauseMidWord) {
+        // Occasional thinking pause mid-word
+        delay = 200 + Math.random() * 300;
+        consecutiveFast = 0;
+      } else if (currentChar === ' ') {
+        // Space between words
+        delay = 40 + Math.random() * 60;
+        lastWasSpace = true;
+        consecutiveFast = 0;
+      } else if (currentChar === ',' || currentChar === '.') {
+        // Slight pause after punctuation
+        delay = 150 + Math.random() * 100;
+        consecutiveFast = 0;
+      } else if (isCapital || isStartOfWord) {
+        // Slightly slower for capitals and word starts
+        delay = 100 + Math.random() * 50;
+        consecutiveFast = 0;
+        lastWasSpace = false;
+      } else if (isCommonPair) {
+        // Very fast for common letter pairs
+        delay = 30 + Math.random() * 20;
+        consecutiveFast++;
+      } else if (consecutiveFast > 2 && Math.random() < 0.7) {
+        // Continue burst typing
+        delay = 40 + Math.random() * 30;
+        consecutiveFast++;
       } else {
-        // More variable typing speed for regular characters
-        // Sometimes fast bursts (80ms), sometimes slower (180ms)
-        const speedVariation = Math.random();
-        if (speedVariation < 0.7) {
-          // 70% normal speed (80-120ms)
-          delay = 80 + Math.random() * 40;
-        } else if (speedVariation < 0.9) {
-          // 20% faster bursts (50-80ms)
-          delay = 50 + Math.random() * 30;
+        // Normal typing with high variation
+        const roll = Math.random();
+        if (roll < 0.15) {
+          // 15% very fast (muscle memory)
+          delay = 35 + Math.random() * 25;
+          consecutiveFast++;
+        } else if (roll < 0.65) {
+          // 50% normal speed
+          delay = 70 + Math.random() * 50;
+          consecutiveFast = 0;
+        } else if (roll < 0.90) {
+          // 25% slightly slow
+          delay = 120 + Math.random() * 40;
+          consecutiveFast = 0;
         } else {
-          // 10% slower, like thinking (120-180ms)
-          delay = 120 + Math.random() * 60;
+          // 10% noticeably slow (thinking/correcting)
+          delay = 160 + Math.random() * 80;
+          consecutiveFast = 0;
         }
+        lastWasSpace = false;
       }
 
+      // Add tiny random variation to all delays
+      delay = delay * (0.9 + Math.random() * 0.2);
+      
       await this.sleep(delay);
     }
-    // Don't add newline here - let caller handle it
+  }
+
+  isCommonLetterPair(pair) {
+    const common = ['th', 'he', 'in', 'er', 'an', 're', 'ed', 'on', 'es', 'st', 
+                    'en', 'at', 'to', 'nt', 'ha', 'nd', 'ou', 'ea', 'ng', 'as',
+                    'or', 'ti', 'is', 'et', 'it', 'ar', 'te', 'se', 'hi', 'of'];
+    return common.includes(pair.toLowerCase());
   }
 
   getLastLoginTime() {
