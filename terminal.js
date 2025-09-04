@@ -1,12 +1,14 @@
 import { FileSystem } from "./filesystem.js";
 import { CommandRegistry } from "./commands/registry.js";
 import BootSequence from "./animations/bootSequence.js";
+import { SupabaseAPI } from "./api/supabase.js";
 
 class TerminalSite {
   constructor() {
     this.term = null;
     this.fitAddon = null;
     this.fs = new FileSystem();
+    this.api = new SupabaseAPI();
     this.commands = new CommandRegistry(this);
     this.currentPath = "/";
     this.commandHistory = [];
