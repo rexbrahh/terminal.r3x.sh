@@ -3,7 +3,7 @@ export class FileSystem {
         this.root = {
             '/': {
                 type: 'directory',
-                children: ['home', 'blog', 'blogs', 'projects', 'about', 'now'],
+                children: ['home', 'blog', 'blogs', 'projects', 'about', 'now', 'home.md', 'blogs.md', 'about.md', 'now.md'],
                 permissions: 'drwxr-xr-x',
                 modified: new Date()
             },
@@ -475,6 +475,322 @@ Extracting the core functionality into a reusable open-source framework so other
 This is a [now page](https://nownownow.com/about), inspired by Derek Sivers.
 
 *Navigate back with \`cd /\` or explore other sections with \`ls\`*`,
+                permissions: '-rw-r--r--',
+                modified: new Date()
+            },
+            '/home.md': {
+                type: 'file',
+                content: `# Welcome to terminal.r3x.sh
+
+This is Rex Liu's personal website, reimagined as a Unix terminal interface. Experience web browsing the way it was meant to be - through the power of the command line.
+
+## Getting Started
+
+If you're new to terminal interfaces, don't worry! This site is designed to be intuitive while maintaining the authenticity of a real Unix system.
+
+### Basic Navigation Commands
+
+- \`ls\` - List directory contents
+- \`cd [directory]\` - Change to a directory
+- \`cat [file]\` - Read files and documents
+- \`pwd\` - Show current directory path
+- \`clear\` - Clear the terminal screen
+- \`help\` - Show all available commands
+
+### Quick Start Guide
+
+1. **Explore**: Type \`ls\` to see what's available
+2. **Read blog posts**: Use \`cd blog\` then \`ls\` to see posts
+3. **Learn about me**: Try \`cat about.md\`
+4. **Current activities**: Check \`cat now.md\`
+5. **Browse projects**: Navigate with \`cd projects\`
+
+## Site Features
+
+- **Full Unix Command Set** - Familiar commands with authentic behavior
+- **Tab Completion** - Press Tab to autocomplete commands and paths  
+- **Command History** - Use ↑/↓ arrows to navigate previous commands
+- **Markdown Rendering** - Beautiful content formatting in terminal style
+- **Mobile Friendly** - Works great on phones and tablets
+- **Responsive Design** - Adapts to any screen size
+
+## About This Terminal
+
+This isn't just a gimmick - it's a fully functional terminal interface built with modern web technologies. The virtual filesystem contains real content that you can explore just like a traditional Unix system.
+
+**Built with**: xterm.js, vanilla JavaScript, and a passion for the command line.
+
+## Tips for Navigation
+
+- **Use Tab completion** - Start typing a command or path and press Tab
+- **Command history** - Press ↑ to recall previous commands
+- **Get help anytime** - Type \`help\` for a full command reference
+- **Explore freely** - You can't break anything, so experiment!
+
+---
+
+*Ready to explore? Type \`help\` to see all available commands, or just start with \`ls\` to look around!*`,
+                permissions: '-rw-r--r--',
+                modified: new Date()
+            },
+            '/blogs.md': {
+                type: 'file',
+                content: `# Blog
+
+Welcome to my blog! Here you'll find my thoughts on technology, programming, development practices, and the intersection of code with everyday life.
+
+## Recent Posts
+
+### Latest Articles
+- **Unix Philosophy in Web Development** (March 2024) - \`cat blog/2024-03-10-unix-philosophy.md\`
+- **Building Terminal UIs for the Web** (February 2024) - \`cat blog/2024-02-20-building-terminal-ui.md\`
+- **Hello, World!** (January 2024) - \`cat blog/2024-01-15-hello-world.md\`
+
+## Browse Posts
+
+### By Directory
+- **Individual posts**: \`cd blog\` then \`ls\` to see all posts
+- **Blog index**: \`cd blogs\` for categories and archive
+- **Quick read**: Use \`cat blog/[filename].md\` to read any post
+
+### By Topic
+
+**Technical Deep Dives**
+- Terminal interface development
+- JavaScript architecture patterns  
+- Performance optimization techniques
+- Modern web development practices
+
+**Development Philosophy**
+- Unix principles in modern development
+- The art of simple, elegant code
+- Open source contribution strategies
+- Work-life balance in tech
+
+**Project Updates**
+- Terminal Web Framework progress
+- Personal website evolution
+- Side project experiments
+- Learning new technologies
+
+## Writing Style
+
+My posts are:
+- **Practical** - Real examples and actionable insights
+- **Accessible** - No unnecessary jargon or complexity
+- **Authentic** - Personal experiences and honest reflections
+- **Terminal-optimized** - Formatted beautifully for command-line reading
+
+## Subscribe & Follow
+
+While this is a static terminal interface, you can:
+- Bookmark this page and check back regularly
+- Follow development on GitHub (coming soon)
+- Connect with me through the contact info in \`cat about.md\`
+
+## Archive & Statistics
+
+- **Total posts**: 3 (and growing)
+- **Words written**: ~2,500
+- **Most popular**: Building Terminal UIs
+- **Latest**: Unix Philosophy in Web Development
+- **Full archive**: Check \`cat blogs/archive.md\`
+
+---
+
+*Navigate with \`cd blog\` to browse posts, or use \`ls\` to see what else is available!*`,
+                permissions: '-rw-r--r--',
+                modified: new Date()
+            },
+            '/about.md': {
+                type: 'file',
+                content: `# About Rex Liu
+
+## Software Engineer & Terminal Enthusiast
+
+I'm a software engineer passionate about creating elegant, efficient solutions that make technology more accessible and enjoyable. I believe in the power of simplicity and the beauty of well-crafted code.
+
+## What Drives Me
+
+### Philosophy
+I believe technology should be:
+- **Accessible** - Available to everyone, regardless of background
+- **Efficient** - Respectful of resources and user time
+- **Elegant** - Beautiful in its simplicity and design
+- **Useful** - Solving real problems that matter
+
+### Interests
+- **Systems Programming** - Low-level performance and efficiency
+- **Web Technologies** - Modern, fast, and accessible web experiences
+- **Command-Line Interfaces** - The elegance of text-based interaction
+- **Open-Source Software** - Collaborative development and knowledge sharing
+- **Minimalist Design** - Less is more, function over form
+
+## Technical Skills
+
+### Programming Languages
+- **JavaScript/TypeScript** - Full-stack web development
+- **Python** - Scripting, automation, and data processing
+- **Rust** - Systems programming and performance-critical applications
+- **Go** - Backend services and tooling
+- **Shell/Bash** - Automation and system administration
+
+### Technologies & Tools
+- **Frontend**: React, Vue, Vanilla JS, HTML5, CSS3
+- **Backend**: Node.js, Express, FastAPI, REST APIs
+- **Databases**: PostgreSQL, MongoDB, Redis
+- **DevOps**: Docker, Kubernetes, AWS, CI/CD
+- **Tools**: Git, Vim, tmux, Linux/Unix systems
+
+## Current Projects
+
+### terminal.r3x.sh
+The website you're currently exploring! A fully functional terminal interface for web browsing, built with xterm.js and vanilla JavaScript.
+
+### Terminal Web Framework
+Extracting the core functionality into a reusable open-source framework so others can create their own terminal-style websites.
+
+### Open Source Contributions
+Regular contributor to various open-source projects, with a focus on developer tools and web technologies.
+
+## Personal Side
+
+### Fun Facts
+- I use vim (and actually know how to exit it!)
+- My first computer was a Commodore 64
+- I've contributed to 50+ open-source projects
+- Terminal multiplexer of choice: tmux
+- I can solve a Rubik's cube in under 2 minutes
+
+### Current Learning
+- **Rust** - Building system-level tools and exploring WebAssembly
+- **Distributed Systems** - Understanding consensus algorithms and scalability
+- **Music Production** - Learning to play the synthesizer
+- **Gardening** - Growing herbs and vegetables
+
+### Life Balance
+- Working remotely from various locations
+- Daily meditation practice for mental clarity
+- Regular hiking and outdoor activities
+- Continuous learning through books and experiments
+
+## Get In Touch
+
+While this terminal doesn't have real email integration yet, you can:
+- Explore my work through the projects section (\`cd projects\`)
+- Read my thoughts in the blog (\`cd blog\`)
+- See what I'm up to now (\`cat now.md\`)
+
+### Coming Soon
+- GitHub integration
+- LinkedIn connection
+- Contact form
+- RSS feed
+
+---
+
+*"The terminal is not just a tool, it's a philosophy of interaction."*
+
+*Want to see what I'm currently working on? Check out \`cat now.md\`*`,
+                permissions: '-rw-r--r--',
+                modified: new Date()
+            },
+            '/now.md': {
+                type: 'file',
+                content: `# What I'm Doing Now
+
+*Last updated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}*
+
+This is my [now page](https://nownownow.com/about) - inspired by Derek Sivers. It's a living document of what I'm currently focused on.
+
+## Primary Focus
+
+### terminal.r3x.sh Development
+Building this terminal-based website you're currently exploring. It started as a personal project to create something unique and has evolved into both a showcase of my work and a proof-of-concept for terminal-style web interfaces.
+
+**Current status**: Core functionality complete, adding content and polish
+
+### Terminal Web Framework
+Extracting the core functionality from this site into a reusable open-source framework called "Terminal Web". The goal is to make it easy for other developers to create their own terminal-style websites.
+
+**Current status**: Architecture planning and API design
+
+## Learning & Development
+
+### Technical Skills
+- **Rust Programming** - Building system-level tools and exploring WebAssembly integration
+- **Advanced JavaScript** - Deepening understanding of performance optimization and modern patterns  
+- **Distributed Systems** - Studying consensus algorithms, eventual consistency, and scaling patterns
+- **Web Performance** - Optimizing for speed, accessibility, and mobile experiences
+
+### Current Reading List
+- "The Unix Programming Environment" by Kernighan & Pike
+- "Designing Data-Intensive Applications" by Martin Kleppmann  
+- "The Pragmatic Programmer" (20th Anniversary Edition)
+- "Systems Performance" by Brendan Gregg
+
+## Side Projects & Experiments
+
+### Open Source Contributions
+- Contributing to terminal emulator projects
+- Improving documentation for various JavaScript libraries
+- Building developer tools and utilities
+
+### Personal Projects
+- **Knowledge Base** - Building a personal wiki using Obsidian and custom scripts
+- **Generative Art** - Experimenting with algorithmic art using Processing and p5.js
+- **CLI Tools** - Creating productivity tools for my daily workflow
+
+## Life & Balance
+
+### Work Environment
+- Working remotely with flexible hours
+- Deep work sessions in the morning
+- Collaborative time in the afternoon
+- Continuous learning in the evening
+
+### Personal Practices
+- **Daily Meditation** - 20-minute mindfulness practice each morning
+- **Physical Activity** - Regular hiking, cycling, and strength training
+- **Creative Outlets** - Learning synthesizer and music production
+- **Gardening** - Growing herbs, vegetables, and experimenting with permaculture
+
+### Current Location
+Based in [location], working from a home office setup optimized for productivity and creativity.
+
+## Goals for This Quarter
+
+### Technical
+- [ ] Complete Terminal Web framework MVP
+- [ ] Publish 2 technical blog posts  
+- [ ] Contribute to 3 new open-source projects
+- [ ] Launch terminal.r3x.sh publicly
+
+### Personal
+- [ ] Finish current reading list
+- [ ] Complete a piece of generative art
+- [ ] Learn 5 new songs on synthesizer
+- [ ] Establish a sustainable garden
+
+### Professional
+- [ ] Speak at a local tech meetup
+- [ ] Mentor a junior developer
+- [ ] Open source a personal tool
+- [ ] Build professional network
+
+## What I'm Not Doing
+
+To stay focused, I'm intentionally not:
+- Taking on freelance projects
+- Learning new frameworks just for the sake of it
+- Attending conferences (focusing on local meetups instead)
+- Starting new side projects until current ones are stable
+
+---
+
+*This page is updated monthly. Want to see my completed work? Check out \`cd projects\` or read my blog at \`cd blog\`.*
+
+*Last major update: ${new Date().toLocaleDateString()}*`,
                 permissions: '-rw-r--r--',
                 modified: new Date()
             }
