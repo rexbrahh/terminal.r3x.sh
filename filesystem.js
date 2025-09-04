@@ -72,7 +72,7 @@ alias ..="cd .."
 alias ~="cd /home"
 
 # Welcome message
-echo "Welcome back, visitor!"`,
+echo "Welcome back, guest!"`,
                 permissions: '-rw-r--r--',
                 modified: new Date()
             },
@@ -699,7 +699,7 @@ Extracting core functionality into a reusable open-source framework called "Term
                     const size = node.type === 'file' ? (node.content?.length || 0) : 4096;
                     const color = node.type === 'directory' ? '\x1b[34m' : '';
                     const reset = node.type === 'directory' ? '\x1b[0m' : '';
-                    lines.push(`${node.permissions} 1 visitor visitor ${String(size).padStart(6)} ${date} ${color}${child}${reset}`);
+                    lines.push(`${node.permissions} 1 guest guest ${String(size).padStart(6)} ${date} ${color}${child}${reset}`);
                 }
             }
             return lines.join('\r\n');
