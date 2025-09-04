@@ -90,7 +90,7 @@ class TerminalSite {
     this.term.writeln(`Last login: ${dateStr}`);
     this.term.writeln("");
     this.term.writeln("Type 'help' for available commands");
-    this.term.writeln("Type 'ls' to navigate this website");
+    //this.term.writeln("Type 'ls' to navigate this website");
     this.term.writeln(
       "Type 'start' + r3x.sh to be redirected to the normal version",
     );
