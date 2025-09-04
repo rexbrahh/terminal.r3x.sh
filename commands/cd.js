@@ -4,7 +4,7 @@ export class CdCommand {
     }
 
     execute(args) {
-        const target = args[0] || '/home';
+        const target = args[0] || '/';
         const newPath = this.terminal.fs.resolvePath(this.terminal.currentPath, target);
         
         if (!this.terminal.fs.exists(newPath)) {
@@ -29,6 +29,7 @@ export class CdCommand {
         lines.push('  ..    Go to parent directory');
         lines.push('  .     Stay in current directory');
         lines.push('  /     Go to root directory');
+        lines.push('  (no args) Go to root directory');
         lines.push('');
         lines.push('Examples:');
         lines.push('  cd /blog     Change to /blog directory');
