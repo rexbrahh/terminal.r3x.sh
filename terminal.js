@@ -54,25 +54,33 @@ class TerminalSite {
     }
 
     displayWelcome() {
-        const welcome = `
-\x1b[32m╦═╗┌─┐─┐ ┬   ┌─┐┬ ┬
-\x1b[32m╠╦╝├┤ ┌┴┬┘   └─┐├─┤
-\x1b[32m╩╚═└─┘┴ └─ • └─┘┴ ┴\x1b[0m
-                                                 
-Welcome to terminal.r3x.sh v1.0.0
-Last login: ${new Date().toLocaleString()}
-
-Type 'help' for available commands
-Type 'ls' to navigate this website
-
-`;
-        this.term.write(welcome);
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { 
+            weekday: 'short', 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        // Write each line separately with proper carriage returns
+        this.term.writeln('\x1b[32m╦═╗┌─┐─┐ ┬   ┌─┐┬ ┬');
+        this.term.writeln('╠╦╝├┤ ┌┴┬┘ • └─┐├─┤');
+        this.term.writeln('╩╚═└─┘┴ └─   └─┘┴ ┴\x1b[0m');
+        this.term.writeln('');
+        this.term.writeln('Welcome to terminal.r3x.sh v1.0.0');
+        this.term.writeln(`Last login: ${dateStr}`);
+        this.term.writeln('');
+        this.term.writeln("Type 'help' for available commands");
+        this.term.writeln("Type 'ls' to navigate this website");
     }
 
     prompt() {
         const path = this.currentPath === '/home' ? '~' : this.currentPath;
         const promptStr = `\x1b[32m${this.username}@${this.hostname}\x1b[0m:\x1b[34m${path}\x1b[0m$ `;
-        this.term.write('\r\n' + promptStr);
+        this.term.writeln('');
+        this.term.write(promptStr);
         this.currentLine = '';
         this.cursorPosition = 0;
     }
@@ -136,10 +144,16 @@ Type 'ls' to navigate this website
         try {
             const result = await this.commands.execute(cmd, args);
             if (result) {
-                this.term.write(result);
+                // Split by line and write each line properly
+                const lines = result.split('\r\n');
+                lines.forEach((line, index) => {
+                    if (index < lines.length - 1 || line) {
+                        this.term.writeln(line);
+                    }
+                });
             }
         } catch (error) {
-            this.term.write(`\x1b[31m${cmd}: command not found\x1b[0m\r\n`);
+            this.term.writeln(`\x1b[31m${cmd}: command not found\x1b[0m`);
         }
         
         this.prompt();
@@ -245,11 +259,18 @@ Type 'ls' to navigate this website
             this.cursorPosition += completion.length;
             this.term.write(completion);
         } else {
-            this.term.write('\r\n');
+            this.term.writeln('');
+            let lineContent = '';
             suggestions.forEach((s, i) => {
-                if (i > 0 && i % 4 === 0) this.term.write('\r\n');
-                this.term.write(s.padEnd(20));
+                if (i > 0 && i % 4 === 0) {
+                    this.term.writeln(lineContent);
+                    lineContent = '';
+                }
+                lineContent += s.padEnd(20);
             });
+            if (lineContent) {
+                this.term.writeln(lineContent);
+            }
             this.prompt();
             this.term.write(this.currentLine);
         }

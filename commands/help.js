@@ -18,18 +18,47 @@ export class HelpCommand {
     getGeneralHelp() {
         const commands = this.terminal.commands.getAll();
         
-        const help = `\x1b[36mterminal.r3x.sh - Unix-style Terminal Interface\x1b[0m
+        // Build command list with proper formatting
+        const commandList = [];
+        for (const cmd of commands) {
+            const helpText = this.terminal.commands.getHelp(cmd);
+            const desc = helpText ? helpText.split('\n')[0].split(' - ')[1] || '' : '';
+            // Truncate description if too long
+            const shortDesc = desc.length > 30 ? desc.substring(0, 27) + '...' : desc;
+            commandList.push({ name: cmd, description: shortDesc });
+        }
         
-Available Commands:
-${'─'.repeat(60)}
+        // Format commands in columns
+        const leftColumn = [];
+        const rightColumn = [];
+        for (let i = 0; i < commandList.length; i++) {
+            if (i % 2 === 0) {
+                leftColumn.push(commandList[i]);
+            } else {
+                rightColumn.push(commandList[i]);
+            }
+        }
+        
+        // Build the formatted output
+        let commandSection = '';
+        for (let i = 0; i < leftColumn.length; i++) {
+            const left = leftColumn[i];
+            const right = rightColumn[i];
+            
+            let line = `  \x1b[32m${left.name.padEnd(6)}\x1b[0m  ${left.description.padEnd(32)}`;
+            if (right) {
+                line += `  \x1b[32m${right.name.padEnd(6)}\x1b[0m  ${right.description}`;
+            }
+            commandSection += line + '\r\n';
+        }
+        
+        const help = `\x1b[36mterminal.r3x.sh - Unix-style Terminal Interface\x1b[0m
 
-${commands.map(cmd => {
-    const helpText = this.terminal.commands.getHelp(cmd);
-    const firstLine = helpText ? helpText.split('\n')[0] : '';
-    return `  \x1b[32m${cmd.padEnd(12)}\x1b[0m ${firstLine}`;
-}).join('\r\n')}
+                        Available Commands:
+────────────────────────────────────────────────────────────────────────────────
 
-${'─'.repeat(60)}
+${commandSection}
+────────────────────────────────────────────────────────────────────────────────
 
 Navigation Tips:
   • Use Tab for command/path completion
@@ -38,14 +67,13 @@ Navigation Tips:
   • Use Ctrl+L to clear screen
 
 Quick Start:
-  \x1b[33mls\x1b[0m          List current directory
-  \x1b[33mcd /blog\x1b[0m    Navigate to blog
-  \x1b[33mcat about\x1b[0m   Read the about file
+  \x1b[32mls\x1b[0m          List current directory
+  \x1b[32mcd /blog\x1b[0m    Navigate to blog
+  \x1b[32mcat about\x1b[0m   Read the about file
 
 For detailed help on a command, type: help [command]
 Example: \x1b[33mhelp ls\x1b[0m
-
-\r\n`;
+`;
         
         return help;
     }
