@@ -1,5 +1,6 @@
 import { FileSystem } from "./filesystem.js";
 import { CommandRegistry } from "./commands/registry.js";
+import BootSequence from "./animations/bootSequence.js";
 
 class TerminalSite {
   constructor() {
@@ -16,7 +17,7 @@ class TerminalSite {
     this.hostname = "r3x.sh";
   }
 
-  init() {
+  async init() {
     this.term = new Terminal({
       theme: {
         background: "#0c0c0c",
@@ -48,9 +49,13 @@ class TerminalSite {
       this.fitAddon.fit();
     });
 
-    this.displayWelcome();
-    this.prompt();
+    // Run boot sequence instead of displayWelcome
+    const bootSequence = new BootSequence(this.term);
+    await bootSequence.run();
+    
+    // Only set up handlers and prompt after boot sequence
     this.setupEventHandlers();
+    this.prompt();
   }
 
   displayWelcome() {
@@ -320,7 +325,7 @@ class TerminalSite {
   }
 }
 
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
   const terminal = new TerminalSite();
-  terminal.init();
+  await terminal.init();
 });
