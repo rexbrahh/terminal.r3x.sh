@@ -1,6 +1,8 @@
 import { FileSystem } from "./filesystem.js";
 import { CommandRegistry } from "./commands/registry.js";
 import BootSequence from "./animations/bootSequence.js";
+import { CRTRenderer } from "./webgl/crtRenderer.js";
+import { TextureCapture } from "./webgl/textureCapture.js";
 
 class TerminalSite {
   constructor() {
@@ -15,12 +17,21 @@ class TerminalSite {
     this.cursorPosition = 0;
     this.username = "guest";
     this.hostname = "r3x.sh";
+    
+    // WebGL components
+    this.crtRenderer = null;
+    this.textureCapture = null;
+    this.webglCanvas = null;
+    this.renderLoop = null;
   }
 
   async init() {
+    // Initialize WebGL first
+    await this.initWebGL();
+    
     this.term = new Terminal({
       theme: {
-        background: "#0c0c0c",
+        background: "transparent", // Make terminal transparent for WebGL overlay
         foreground: "#00ff00",
         cursor: "#00ff00",
         selection: "rgba(0, 255, 0, 0.3)",
@@ -47,7 +58,13 @@ class TerminalSite {
 
     window.addEventListener("resize", () => {
       this.fitAddon.fit();
+      if (this.crtRenderer) {
+        this.crtRenderer.resize();
+      }
     });
+
+    // Start the render loop
+    this.startRenderLoop();
 
     // Run boot sequence instead of displayWelcome
     const bootSequence = new BootSequence(this.term);
@@ -56,6 +73,55 @@ class TerminalSite {
     // Only set up handlers and prompt after boot sequence
     this.setupEventHandlers();
     this.prompt();
+  }
+
+  async initWebGL() {
+    try {
+      // Get WebGL canvas
+      this.webglCanvas = document.getElementById("webgl-canvas");
+      
+      // Initialize WebGL renderer
+      this.crtRenderer = new CRTRenderer(this.webglCanvas);
+      
+      // Initialize texture capture
+      this.textureCapture = new TextureCapture();
+      
+      console.log("WebGL initialization successful");
+    } catch (error) {
+      console.warn("WebGL initialization failed, falling back to normal rendering:", error);
+      // Hide WebGL canvas if init fails
+      if (this.webglCanvas) {
+        this.webglCanvas.style.display = 'none';
+      }
+    }
+  }
+
+  startRenderLoop() {
+    if (!this.crtRenderer || !this.textureCapture) {
+      return; // WebGL not available
+    }
+
+    const render = async (time) => {
+      try {
+        // Capture terminal content as texture
+        const terminalElement = document.getElementById("terminal-container");
+        const canvas = await this.textureCapture.captureTerminal(terminalElement);
+        
+        if (canvas) {
+          // Update WebGL texture and render
+          this.crtRenderer.updateTerminalTexture(canvas);
+          this.crtRenderer.render(time);
+        }
+      } catch (error) {
+        console.warn("Render loop error:", error);
+      }
+      
+      // Continue render loop
+      this.renderLoop = requestAnimationFrame(render);
+    };
+
+    // Start the loop
+    this.renderLoop = requestAnimationFrame(render);
   }
 
   displayWelcome() {

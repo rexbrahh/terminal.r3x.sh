@@ -10,13 +10,32 @@ body {
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     overflow: hidden;
     height: 100vh;
-    display: flex;
-    flex-direction: column;
+}
+
+#app-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+}
+
+#webgl-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
 }
 
 #terminal-container {
-    flex: 1;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     padding: 10px;
+    z-index: 2;
+    background: transparent;
     overflow: hidden;
 }
 
@@ -26,6 +45,11 @@ body {
 
 .xterm-viewport {
     background-color: #0c0c0c !important;
+}
+
+/* Ensure WebGL canvas fills screen and handles terminal transparency */
+#webgl-canvas {
+    background: #0c0c0c; /* Fallback background */
 }
 
 .xterm-screen {
