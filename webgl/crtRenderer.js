@@ -81,39 +81,39 @@ class CRTRenderer {
             
             varying vec2 v_texCoord;
             
-            // CRT Effect Functions
+            // CRT Effect Functions (toned down for readability)
             vec3 applyScanlines(vec3 color, vec2 uv) {
-                // Horizontal scanlines
-                float scanline = sin(uv.y * u_resolution.y * 2.0) * 0.15;
+                // Very subtle horizontal scanlines
+                float scanline = sin(uv.y * u_resolution.y * 2.0) * 0.05;
                 return color * (1.0 - scanline);
             }
             
             vec3 applyPhosphorGlow(vec3 color, vec2 uv) {
-                // Green phosphor glow effect
-                vec3 glow = vec3(0.0, 1.0, 0.2); // Green tint
-                float glowStrength = length(color) * 0.3;
+                // Minimal green phosphor glow
+                vec3 glow = vec3(0.0, 1.0, 0.1); // Subtle green tint
+                float glowStrength = length(color) * 0.1;
                 return color + glow * glowStrength;
             }
             
             vec2 applyBarrelDistortion(vec2 uv) {
-                // Subtle barrel distortion for curved CRT effect
+                // Very subtle barrel distortion
                 vec2 centered = uv - 0.5;
                 float r2 = dot(centered, centered);
-                float distortion = 0.1; // Subtle curve
+                float distortion = 0.02; // Much more subtle
                 return uv + centered * distortion * r2;
             }
             
             vec3 applyVignette(vec3 color, vec2 uv) {
-                // Darken edges like old CRT monitors
+                // Gentle edge darkening
                 vec2 center = uv - 0.5;
-                float vignette = 1.0 - dot(center, center) * 0.8;
+                float vignette = 1.0 - dot(center, center) * 0.3;
                 return color * vignette;
             }
             
             vec3 addNoise(vec3 color, vec2 uv) {
-                // Subtle film grain
+                // Very subtle film grain
                 float noise = fract(sin(dot(uv + u_time * 0.001, vec2(12.9898, 78.233))) * 43758.5453);
-                return color + noise * 0.02;
+                return color + noise * 0.005;
             }
             
             void main() {
@@ -132,9 +132,9 @@ class CRTRenderer {
                 color = applyVignette(color, uv);
                 color = addNoise(color, uv);
                 
-                // Boost contrast and brightness for that CRT pop
-                color = pow(color, vec3(0.9)); // Slight gamma adjustment
-                color *= 1.2; // Brightness boost
+                // Minimal color adjustment
+                color = pow(color, vec3(0.95)); // Very slight gamma adjustment
+                color *= 1.05; // Minimal brightness boost
                 
                 gl_FragColor = vec4(color, texColor.a);
             }
