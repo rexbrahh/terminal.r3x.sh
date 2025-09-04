@@ -1,0 +1,140 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #0c0c0c;
+    color: #00ff00;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#terminal-container {
+    flex: 1;
+    padding: 10px;
+    overflow: hidden;
+}
+
+.xterm {
+    height: 100%;
+}
+
+.xterm-viewport {
+    background-color: #0c0c0c !important;
+}
+
+.xterm-screen {
+    padding: 10px;
+}
+
+/* Cursor styling */
+.xterm-cursor-layer {
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+/* Scrollbar styling */
+.xterm-viewport::-webkit-scrollbar {
+    width: 8px;
+}
+
+.xterm-viewport::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.xterm-viewport::-webkit-scrollbar-thumb {
+    background: #00ff00;
+    opacity: 0.3;
+    border-radius: 4px;
+}
+
+.xterm-viewport::-webkit-scrollbar-thumb:hover {
+    opacity: 0.5;
+}
+
+/* CRT effect (optional, can be toggled) */
+.crt-effect {
+    position: relative;
+}
+
+.crt-effect::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 2;
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+    animation: scan-line 8s linear infinite;
+}
+
+@keyframes scan-line {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 0 10px;
+    }
+}
+
+/* Glow effect for text */
+.xterm-rows {
+    text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    #terminal-container {
+        padding: 5px;
+    }
+    
+    .xterm {
+        font-size: 12px !important;
+    }
+}
+
+/* Loading animation */
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: #0c0c0c;
+}
+
+.loading-text {
+    color: #00ff00;
+    font-family: monospace;
+    font-size: 18px;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Selection styling */
+::selection {
+    background-color: rgba(0, 255, 0, 0.3);
+    color: #ffffff;
+}
+
+::-moz-selection {
+    background-color: rgba(0, 255, 0, 0.3);
+    color: #ffffff;
+}
