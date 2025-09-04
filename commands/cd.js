@@ -20,18 +20,20 @@ export class CdCommand {
     }
 
     getHelp() {
-        return `cd - change directory
-Usage: cd [PATH]
-
-Special paths:
-  ~     Go to home directory
-  ..    Go to parent directory
-  .     Stay in current directory
-  /     Go to root directory
-
-Examples:
-  cd /blog     Change to /blog directory
-  cd ..        Go up one directory
-  cd ~         Go to home directory`;
+        const lines = [];
+        lines.push('cd - change directory');
+        lines.push('Usage: cd [PATH]');
+        lines.push('');
+        lines.push('Special paths:');
+        lines.push('  ~     Go to home directory');
+        lines.push('  ..    Go to parent directory');
+        lines.push('  .     Stay in current directory');
+        lines.push('  /     Go to root directory');
+        lines.push('');
+        lines.push('Examples:');
+        lines.push('  cd /blog     Change to /blog directory');
+        lines.push('  cd ..        Go up one directory');
+        lines.push('  cd ~         Go to home directory');
+        return lines.join('\r\n');
     }
 }

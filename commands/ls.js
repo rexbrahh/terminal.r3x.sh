@@ -34,17 +34,19 @@ export class LsCommand {
     }
 
     getHelp() {
-        return `ls - list directory contents
-Usage: ls [OPTIONS] [PATH]
-
-Options:
-  -l    use a long listing format
-  -a    show hidden files (starting with .)
-  -la   combine -l and -a options
-
-Examples:
-  ls          List current directory
-  ls /blog    List contents of /blog
-  ls -la      Detailed listing with hidden files`;
+        const lines = [];
+        lines.push('ls - list directory contents');
+        lines.push('Usage: ls [OPTIONS] [PATH]');
+        lines.push('');
+        lines.push('Options:');
+        lines.push('  -l    use a long listing format');
+        lines.push('  -a    show hidden files (starting with .)');
+        lines.push('  -la   combine -l and -a options');
+        lines.push('');
+        lines.push('Examples:');
+        lines.push('  ls          List current directory');
+        lines.push('  ls /blog    List contents of /blog');
+        lines.push('  ls -la      Detailed listing with hidden files');
+        return lines.join('\r\n');
     }
 }
