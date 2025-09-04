@@ -4,7 +4,7 @@ export class LsCommand {
         this.detailed = options.detailed || false;
     }
 
-    execute(args) {
+    async execute(args) {
         const detailed = this.detailed || args.includes('-l') || args.includes('-la');
         const showHidden = args.includes('-a') || args.includes('-la');
         
@@ -20,6 +20,13 @@ export class LsCommand {
         }
         
         let children = this.terminal.fs.getChildren(resolvedPath);
+        
+        // Add dynamic blog posts to /blogs directory
+        if (resolvedPath === '/blogs') {
+            const posts = await this.terminal.api.getPosts();
+            const blogFiles = posts.map(post => post.slug + '.md');
+            children = [...children, ...blogFiles];
+        }
         
         if (!showHidden) {
             children = children.filter(child => !child.startsWith('.'));
