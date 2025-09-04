@@ -69,16 +69,18 @@ export class CatCommand {
     }
 
     getHelp() {
-        return `cat - concatenate and display files
-Usage: cat FILE [FILE...]
-
-Description:
-  Display the contents of one or more files.
-  Markdown files are rendered with basic formatting.
-
-Examples:
-  cat README.md          Display README file
-  cat /about            Display about file
-  cat file1 file2       Display multiple files`;
+        const lines = [];
+        lines.push('cat - concatenate and display files');
+        lines.push('Usage: cat FILE [FILE...]');
+        lines.push('');
+        lines.push('Description:');
+        lines.push('  Display the contents of one or more files.');
+        lines.push('  Markdown files are rendered with basic formatting.');
+        lines.push('');
+        lines.push('Examples:');
+        lines.push('  cat README.md          Display README file');
+        lines.push('  cat /about            Display about file');
+        lines.push('  cat file1 file2       Display multiple files');
+        return lines.join('\r\n');
     }
 }

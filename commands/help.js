@@ -56,14 +56,16 @@ export class HelpCommand {
     }
 
     getHelp() {
-        return `help - display help information
-Usage: help [COMMAND]
-
-Description:
-  Show general help or help for a specific command.
-
-Examples:
-  help       Show all available commands
-  help ls    Show detailed help for 'ls' command`;
+        const lines = [];
+        lines.push('help - display help information');
+        lines.push('Usage: help [COMMAND]');
+        lines.push('');
+        lines.push('Description:');
+        lines.push('  Show general help or help for a specific command.');
+        lines.push('');
+        lines.push('Examples:');
+        lines.push('  help       Show all available commands');
+        lines.push('  help ls    Show detailed help for \'ls\' command');
+        return lines.join('\r\n');
     }
 }
