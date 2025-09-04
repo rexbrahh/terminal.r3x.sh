@@ -10,33 +10,31 @@ body {
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     overflow: hidden;
     height: 100vh;
-}
-
-#app-container {
-    position: relative;
-    width: 100%;
-    height: 100vh;
-}
-
-#webgl-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 #terminal-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    flex: 1;
     padding: 10px;
-    z-index: 2;
-    background: transparent;
     overflow: hidden;
+    position: relative;
+    
+    /* CRT effect styling */
+    border-radius: 10px;
+    
+    /* Phosphor glow */
+    filter: 
+        contrast(1.1) 
+        brightness(1.05)
+        drop-shadow(0 0 2px rgba(0, 255, 0, 0.3));
+    
+    /* Subtle screen curve illusion */
+    transform: perspective(1200px) rotateY(0deg);
+    transform-style: preserve-3d;
+    
+    /* Subtle flicker animation */
+    animation: flicker 10s ease-in-out infinite;
 }
 
 .xterm {
@@ -47,10 +45,6 @@ body {
     background-color: #0c0c0c !important;
 }
 
-/* Ensure WebGL canvas fills screen and handles terminal transparency */
-#webgl-canvas {
-    background: #0c0c0c; /* Fallback background */
-}
 
 .xterm-screen {
     padding: 10px;
@@ -85,34 +79,64 @@ body {
     opacity: 0.5;
 }
 
-/* CRT effect (optional, can be toggled) */
-.crt-effect {
-    position: relative;
-}
 
-.crt-effect::before {
-    content: " ";
-    display: block;
+/* Scanline overlay */
+#terminal-container::before {
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
-    bottom: 0;
     right: 0;
-    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-    z-index: 2;
-    background-size: 100% 2px, 3px 100%;
+    bottom: 0;
+    background: 
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 0, 0, 0.05) 2px,
+            rgba(0, 0, 0, 0.05) 4px
+        );
+    z-index: 10;
     pointer-events: none;
-    animation: scan-line 8s linear infinite;
+    animation: scanlines 8s linear infinite;
 }
 
-@keyframes scan-line {
+/* Vignette effect */
+#terminal-container::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+        ellipse at center,
+        transparent 0%,
+        transparent 60%,
+        rgba(0, 0, 0, 0.2) 100%
+    );
+    z-index: 11;
+    pointer-events: none;
+}
+
+@keyframes scanlines {
     0% {
-        background-position: 0 0;
+        transform: translateY(0);
     }
     100% {
-        background-position: 0 10px;
+        transform: translateY(10px);
     }
+}
+
+/* Text glow effect */
+.xterm-screen canvas {
+    filter: drop-shadow(0 0 1px rgba(0, 255, 0, 0.5));
+}
+
+/* Flicker animation (subtle) */
+@keyframes flicker {
+    0%, 100% { opacity: 1; }
+    92% { opacity: 0.98; }
 }
 
 /* Glow effect for text */

@@ -63,13 +63,17 @@ class TextureCapture {
     async captureWithHtml2Canvas(element) {
         // html2canvas converts DOM element to canvas
         const canvas = await html2canvas(element, {
-            backgroundColor: null, // Transparent background
+            backgroundColor: '#0c0c0c', // Solid background to avoid transparency issues
             scale: 1,
-            logging: false,
+            logging: true, // Enable logging for debugging
             allowTaint: true,
             useCORS: true,
             width: this.captureCanvas.width,
-            height: this.captureCanvas.height
+            height: this.captureCanvas.height,
+            x: 0,
+            y: 0,
+            scrollX: 0,
+            scrollY: 0
         });
 
         return canvas;
