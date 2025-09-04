@@ -21,13 +21,6 @@ export class LsCommand {
         
         let children = this.terminal.fs.getChildren(resolvedPath);
         
-        // Add dynamic blog posts to /blogs directory
-        if (resolvedPath === '/blogs') {
-            const posts = await this.terminal.api.getPosts();
-            const blogFiles = posts.map(post => post.slug + '.md');
-            children = [...children, ...blogFiles];
-        }
-        
         if (!showHidden) {
             children = children.filter(child => !child.startsWith('.'));
         }

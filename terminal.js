@@ -1,4 +1,4 @@
-import { FileSystem } from "./filesystem.js";
+import { DatabaseFileSystem } from "./filesystem/DatabaseFileSystem.js";
 import { CommandRegistry } from "./commands/registry.js";
 import BootSequence from "./animations/bootSequence.js";
 import { SupabaseAPI } from "./api/supabase.js";
@@ -7,8 +7,8 @@ class TerminalSite {
   constructor() {
     this.term = null;
     this.fitAddon = null;
-    this.fs = new FileSystem();
     this.api = new SupabaseAPI();
+    this.fs = new DatabaseFileSystem(this.api);
     this.commands = new CommandRegistry(this);
     this.currentPath = "/";
     this.commandHistory = [];
@@ -51,6 +51,9 @@ class TerminalSite {
       this.fitAddon.fit();
     });
 
+    // Initialize filesystem before boot sequence
+    await this.fs.initialize();
+    
     // Run boot sequence instead of displayWelcome
     const bootSequence = new BootSequence(this.term);
     await bootSequence.run();

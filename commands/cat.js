@@ -23,8 +23,7 @@ export class CatCommand {
                 continue;
             }
             
-            // Check if this is a dynamic content path
-            const content = await this.getDynamicContent(path) || this.terminal.fs.getContent(path);
+            const content = await this.terminal.fs.getContent(path);
             if (content) {
                 results.push(this.renderMarkdown(content));
             }
@@ -33,33 +32,6 @@ export class CatCommand {
         return results.join('\r\n') + '\r\n';
     }
 
-    async getDynamicContent(path) {
-        // Check if path matches dynamic content patterns
-        if (path === '/about.md') {
-            const page = await this.terminal.api.getPage('about');
-            return page ? page.content : null;
-        }
-        
-        // Check for blog posts in /blogs/ directory
-        if (path.startsWith('/blogs/') && path.endsWith('.md')) {
-            const slug = path.replace('/blogs/', '').replace('.md', '');
-            const post = await this.terminal.api.getPost(slug);
-            return post ? `# ${post.title}\n\n${post.content}` : null;
-        }
-
-        // Check for pages in /home, /now directories
-        if (path === '/home/index.md') {
-            const page = await this.terminal.api.getPage('home');
-            return page ? page.content : null;
-        }
-
-        if (path === '/now/index.md') {
-            const page = await this.terminal.api.getPage('now');
-            return page ? page.content : null;
-        }
-        
-        return null;
-    }
 
     renderMarkdown(content) {
         // Simple markdown to terminal rendering
