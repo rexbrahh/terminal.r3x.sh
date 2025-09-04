@@ -69,6 +69,9 @@ class TerminalSite {
     this.term.writeln("╠╦╝├┤ ┌┴┬┘ • └─┐├─┤");
     this.term.writeln("╩╚═└─┘┴ └─   └─┘┴ ┴\x1b[0m");
     this.term.writeln("");
+    this.term.writeln(
+      "Type 'start' + r3x.sh to be redirected to the normal version",
+    );
     //this.term.writeln('Welcome to terminal.r3x.sh v1.0.0');
     this.term.writeln(`Last login: ${dateStr}`);
     this.term.writeln("");
@@ -304,4 +307,3 @@ window.addEventListener("DOMContentLoaded", () => {
   const terminal = new TerminalSite();
   terminal.init();
 });
-
