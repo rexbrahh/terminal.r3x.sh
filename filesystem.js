@@ -3,7 +3,7 @@ export class FileSystem {
         this.root = {
             '/': {
                 type: 'directory',
-                children: ['home', 'blog', 'projects', 'about', 'now'],
+                children: ['home', 'blog', 'blogs', 'projects', 'about', 'now'],
                 permissions: 'drwxr-xr-x',
                 modified: new Date()
             },
@@ -17,26 +17,47 @@ export class FileSystem {
                 type: 'file',
                 content: `# Welcome to terminal.r3x.sh
 
-This is Rex Liu's personal website, reimagined as a Unix terminal.
+This is Rex Liu's personal website, reimagined as a Unix terminal interface. Experience web browsing the way it was meant to be - through the power of the command line.
 
-## Navigation
+## Getting Started
 
-Use familiar Unix commands to explore:
+If you're new to terminal interfaces, don't worry! This site is designed to be intuitive while maintaining the authenticity of a real Unix system.
+
+### Basic Navigation
+
+Use these familiar Unix commands to explore:
 - \`ls\` - List directory contents
-- \`cd\` - Change directory
-- \`cat\` - Read files
-- \`pwd\` - Show current directory
-- \`clear\` - Clear the terminal
+- \`cd [directory]\` - Change directory
+- \`cat [file]\` - Read files and documents
+- \`pwd\` - Show current directory path
+- \`clear\` - Clear the terminal screen
 - \`help\` - Show all available commands
 
-## Quick Links
+### Quick Start Guide
 
-- \`cd /blog\` - Read my blog posts
-- \`cd /projects\` - View my projects
-- \`cat /about\` - Learn about me
-- \`cat /now\` - What I'm doing now
+1. Type \`ls\` to see what's available
+2. Use \`cd /blog\` to read my latest posts
+3. Check out \`cat /about\` to learn about me
+4. See \`cat /now\` for what I'm currently working on
+5. Explore \`cd /projects\` for my development work
 
-Enjoy exploring!`,
+## Site Features
+
+- **Full Unix Command Set**: Familiar commands with authentic behavior
+- **Tab Completion**: Press Tab to autocomplete commands and paths
+- **Command History**: Use ↑/↓ arrows to navigate previous commands
+- **Markdown Rendering**: Beautiful content formatting in terminal style
+- **Mobile Friendly**: Works great on phones and tablets
+
+## About This Terminal
+
+This isn't just a gimmick - it's a fully functional terminal interface built with modern web technologies. The virtual filesystem contains real content that you can explore just like a traditional Unix system.
+
+Built with xterm.js, vanilla JavaScript, and a passion for the command line.
+
+---
+
+*Ready to explore? Type \`help\` to see all available commands, or just start with \`ls\` to look around!*`,
                 permissions: '-rw-r--r--',
                 modified: new Date()
             },
@@ -177,6 +198,113 @@ Sometimes the old ways are the best ways. The Unix philosophy has survived for o
 *"Simplicity is the ultimate sophistication." - Leonardo da Vinci*`,
                 permissions: '-rw-r--r--',
                 modified: new Date('2024-03-10')
+            },
+            '/blogs': {
+                type: 'directory',
+                children: ['README.md', 'categories.md', 'archive.md'],
+                permissions: 'drwxr-xr-x',
+                modified: new Date()
+            },
+            '/blogs/README.md': {
+                type: 'file',
+                content: `# Blog Section
+
+Welcome to my blog! Here you'll find my thoughts on technology, programming, and life.
+
+## Recent Posts
+
+Navigate to individual posts in the \`/blog\` directory:
+- \`cat /blog/2024-03-10-unix-philosophy.md\` - Unix Philosophy in Web Development
+- \`cat /blog/2024-02-20-building-terminal-ui.md\` - Building Terminal UIs
+- \`cat /blog/2024-01-15-hello-world.md\` - Hello World
+
+## Categories
+
+- **Technical**: Deep dives into programming and technology
+- **Philosophy**: Thoughts on development practices and principles
+- **Projects**: Updates and insights from my work
+
+## Archive
+
+Use \`ls /blog\` to see all posts, or check \`cat /blogs/archive.md\` for a chronological list.
+
+---
+*All posts are written in Markdown and optimized for terminal reading.*`,
+                permissions: '-rw-r--r--',
+                modified: new Date()
+            },
+            '/blogs/categories.md': {
+                type: 'file',
+                content: `# Blog Categories
+
+## Technical Posts
+- Building Terminal UIs for the Web
+- Unix Philosophy in Modern Development
+- JavaScript Module Systems
+- Performance Optimization Techniques
+
+## Philosophy & Practices
+- The Art of Simple Code
+- Why Documentation Matters
+- Open Source Contributions
+- Work-Life Balance in Tech
+
+## Project Updates
+- Terminal Web Framework Development
+- Personal Website Evolution
+- Side Project Experiments
+- Learning New Technologies
+
+## Meta
+- About This Blog
+- Writing Process
+- Tools and Setup
+- Future Plans
+
+---
+*Navigate back with \`cd ..\` or explore posts with \`ls /blog\`*`,
+                permissions: '-rw-r--r--',
+                modified: new Date()
+            },
+            '/blogs/archive.md': {
+                type: 'file',
+                content: `# Blog Archive
+
+## 2024
+
+### March
+- **2024-03-10**: Embracing the Unix Philosophy in Web Development
+  - Tags: philosophy, unix, development
+  - Length: 5 min read
+
+### February  
+- **2024-02-20**: Building a Terminal UI for the Modern Web
+  - Tags: technical, web-development, terminal
+  - Length: 8 min read
+
+### January
+- **2024-01-15**: Hello, World!
+  - Tags: introduction, meta
+  - Length: 3 min read
+
+## Coming Soon
+
+- Advanced Terminal Commands Implementation
+- State Management in Vanilla JavaScript
+- Progressive Web App Features
+- Mobile Terminal Experience
+
+## Statistics
+
+- Total posts: 3
+- Total words: ~2,500
+- Most popular: Building Terminal UIs
+- Most recent: Unix Philosophy
+
+---
+*Use \`cat /blog/[filename]\` to read any post*`,
+                permissions: '-rw-r--r--',
+                modified: new Date()
             },
             '/projects': {
                 type: 'directory',
@@ -457,14 +585,41 @@ This is a [now page](https://nownownow.com/about), inspired by Derek Sivers.
             }
             return lines.join('\r\n');
         } else {
-            return children.map(child => {
+            // Format in columns for better readability
+            const items = [];
+            const maxLength = Math.max(...children.map(c => c.length));
+            const columnWidth = maxLength + 2;
+            const terminalWidth = 80; // Assume 80 char width
+            const columnsPerRow = Math.floor(terminalWidth / columnWidth) || 1;
+            
+            // Add colors for directories
+            const formattedChildren = children.map(child => {
                 const childPath = path === '/' ? '/' + child : path + '/' + child;
                 const node = this.get(childPath);
                 if (node && node.type === 'directory') {
-                    return `\x1b[34m${child}\x1b[0m`;
+                    return { name: child, display: `\x1b[34m${child}\x1b[0m`, isDir: true };
                 }
-                return child;
-            }).join('  ');
+                return { name: child, display: child, isDir: false };
+            });
+            
+            // Sort: directories first, then files
+            formattedChildren.sort((a, b) => {
+                if (a.isDir && !b.isDir) return -1;
+                if (!a.isDir && b.isDir) return 1;
+                return a.name.localeCompare(b.name);
+            });
+            
+            // Build rows
+            const rows = [];
+            for (let i = 0; i < formattedChildren.length; i += columnsPerRow) {
+                const rowItems = formattedChildren.slice(i, i + columnsPerRow);
+                const row = rowItems.map(item => 
+                    item.display + ' '.repeat(Math.max(0, columnWidth - item.name.length))
+                ).join('');
+                rows.push(row);
+            }
+            
+            return rows.join('\r\n');
         }
     }
 }
