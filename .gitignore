@@ -5,12 +5,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
-.claude/
+*claude*
 # md files
-CLAUDE.md
-terminal-web-framework.md
-DATABASE_MIGRATION_GUIDE.md
-terminal-website-plan.md
+*.md
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
