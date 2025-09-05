@@ -37,6 +37,14 @@ export class HelpCommand {
         lines.push('');
         lines.push('─'.repeat(70));
         lines.push('');
+        lines.push('Supported File Types:');
+        lines.push('  \x1b[36mMarkdown\x1b[0m    .md files with formatted terminal rendering');
+        lines.push('  \x1b[36mCode\x1b[0m        .js, .py, .java, .cpp, .go, .rust, .ts, .jsx, .tsx');
+        lines.push('  \x1b[36mJSON\x1b[0m        .json files with syntax highlighting');
+        lines.push('  \x1b[36mImages\x1b[0m      .png, .jpg, .jpeg, .gif, .webp (ASCII preview)');
+        lines.push('  \x1b[36mText\x1b[0m        .txt and plain text files');
+        lines.push('  \x1b[36mBinary\x1b[0m      Executables and other binary formats (hex view)');
+        lines.push('');
         lines.push('Navigation Tips:');
         lines.push('  • Use Tab for command/path completion');
         lines.push('  • Use ↑/↓ arrows for command history');
@@ -45,8 +53,9 @@ export class HelpCommand {
         lines.push('');
         lines.push('Quick Start:');
         lines.push('  \x1b[32mls\x1b[0m          List current directory');
-        lines.push('  \x1b[32mcd /blog\x1b[0m    Navigate to blog');
-        lines.push('  \x1b[32mcat about\x1b[0m   Read the about file');
+        lines.push('  \x1b[32mcd /blogs\x1b[0m   Navigate to blog posts');
+        lines.push('  \x1b[32mcat about.md\x1b[0m Read the about file');
+        lines.push('  \x1b[32mstart r3x.sh\x1b[0m Open external website');
         lines.push('');
         lines.push('For detailed help on a command, type: help [command]');
         lines.push('Example: \x1b[33mhelp ls\x1b[0m');
