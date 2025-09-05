@@ -1,1 +1,1 @@
-database as a hierarchical file system based on xterm.js
+postgres as a hierarchical file system based on xterm.js
