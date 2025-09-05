@@ -1,1 +1,1 @@
-based on xterm.js
+database as a hierarchical file system based on xterm.js

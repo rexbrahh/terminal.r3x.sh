@@ -144,6 +144,58 @@ body {
     text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
 }
 
+/* Mobile enter button */
+#mobile-enter-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+    background-color: rgba(0, 255, 0, 0.8);
+    border: 2px solid #00ff00;
+    color: #0c0c0c;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+    z-index: 1000;
+    transition: all 0.3s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    opacity: 0.8;
+}
+
+#mobile-enter-btn:active {
+    background-color: rgba(0, 255, 0, 1);
+    transform: scale(0.95);
+}
+
+#mobile-enter-btn:hover {
+    background-color: rgba(0, 255, 0, 0.9);
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+}
+
+/* Subtle pulse animation for mobile enter button during boot */
+#mobile-enter-btn.boot-sequence {
+    animation: enterButtonPulse 2s ease-in-out infinite;
+}
+
+@keyframes enterButtonPulse {
+    0%, 100% { 
+        opacity: 0.8;
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 1;
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+    }
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
     #terminal-container {
@@ -152,6 +204,10 @@ body {
     
     .xterm {
         font-size: 12px !important;
+    }
+    
+    #mobile-enter-btn {
+        display: flex;
     }
 }
 
