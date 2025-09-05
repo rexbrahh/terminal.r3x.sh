@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Sample Files to Database</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #00ff00;
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 10px;
+        }
+        #output {
+            background: #000;
+            border: 1px solid #00ff00;
+            padding: 15px;
+            margin: 20px 0;
+            min-height: 300px;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            max-height: 500px;
+        }
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-family: monospace;
+        }
+        button:hover {
+            background: #00cc00;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .success {
+            color: #00ff00;
+        }
+        .error {
+            color: #ff0000;
+        }
+        .info {
+            color: #ffff00;
+        }
+    </style>
+</head>
+<body>
+    <h1>Add Sample Files to Database</h1>
+    <p>This will add sample files to demonstrate the enhanced rendering capabilities.</p>
+    
+    <button id="addBtn" onclick="addSampleFiles()">Add Sample Files</button>
+    <button onclick="clearOutput()">Clear Output</button>
+    
+    <div id="output"></div>
+
+    <script type="module">
+        import { SupabaseAPI } from './api/supabase.js';
+        
+        const output = document.getElementById('output');
+        const addBtn = document.getElementById('addBtn');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const span = document.createElement('span');
+            span.className = type;
+            span.textContent = `[${timestamp}] ${message}\n`;
+            output.appendChild(span);
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        window.clearOutput = function() {
+            output.innerHTML = '';
+        }
+        
+        // Sample files content
+        const sampleFiles = [
+            {
+                path: '/samples',
+                type: 'directory',
+                title: 'Sample Files',
+                content: null,
+                parent_path: '/',
+                mime_type: null,
+                sort_order: 500
+            },
+            {
+                path: '/samples/test.csv',
+                type: 'file',
+                title: 'Sample CSV Data',
+                content: `Name,Age,Department,Salary,Start Date
+John Smith,32,Engineering,95000,2020-03-15
+Jane Doe,28,Marketing,75000,2021-06-01
+Bob Johnson,45,Sales,85000,2018-11-20
+Alice Williams,36,HR,70000,2019-09-10
+Charlie Brown,29,Engineering,90000,2022-01-15
+Diana Prince,41,Management,120000,2017-04-05
+Eve Anderson,33,Finance,80000,2020-08-12
+Frank Miller,38,Engineering,100000,2019-02-28
+Grace Lee,26,Marketing,65000,2023-03-01
+Henry Wilson,52,Management,150000,2015-06-15`,
+                parent_path: '/samples',
+                mime_type: 'text/csv',
+                sort_order: 1
+            },
+            {
+                path: '/samples/config.yaml',
+                type: 'file',
+                title: 'Sample YAML Config',
+                content: `application:
+  name: terminal.r3x.sh
+  version: 2.0.0
+  description: Enhanced terminal web interface
+
+server:
+  host: localhost
+  port: 8000
+  secure: false
+  cors:
+    enabled: true
+    origins:
+      - http://localhost:3000
+      - https://r3x.sh
+
+database:
+  provider: supabase
+  connection:
+    url: https://api.supabase.io
+    anon_key: \${SUPABASE_ANON_KEY}
+    service_role: \${SUPABASE_SERVICE_ROLE}
+  
+features:
+  - markdown_rendering
+  - syntax_highlighting
+  - csv_tables
+  - yaml_parsing
+  - archive_viewing
+  
+rendering:
+  max_width: 80
+  color_output: true
+  themes:
+    default:
+      background: "#0c0c0c"
+      foreground: "#00ff00"
+      cursor: "#00ff00"
+    
+build:
+  minify: false
+  source_maps: true
+  target: es2020`,
+                parent_path: '/samples',
+                mime_type: 'text/yaml',
+                sort_order: 2
+            },
+            {
+                path: '/samples/test.html',
+                type: 'file',
+                title: 'Sample HTML Page',
+                content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Test HTML file for terminal rendering">
+    <title>Terminal Web Renderer Test</title>
+</head>
+<body>
+    <h1>Welcome to Terminal Web</h1>
+    
+    <p>This is a <strong>test document</strong> to demonstrate HTML to terminal conversion.</p>
+    
+    <h2>Features</h2>
+    <ul>
+        <li>Converts HTML structure to terminal text</li>
+        <li>Preserves headings and formatting</li>
+        <li>Handles lists and tables</li>
+        <li>Shows links in terminal-friendly format</li>
+    </ul>
+    
+    <h3>Code Example</h3>
+    <pre><code>
+function hello() {
+    console.log("Hello from terminal!");
+}
+    </code></pre>
+    
+    <h3>Sample Table</h3>
+    <table>
+        <tr>
+            <th>Feature</th>
+            <th>Status</th>
+            <th>Version</th>
+        </tr>
+        <tr>
+            <td>Markdown</td>
+            <td>Complete</td>
+            <td>2.0</td>
+        </tr>
+        <tr>
+            <td>CSV</td>
+            <td>Complete</td>
+            <td>2.0</td>
+        </tr>
+        <tr>
+            <td>YAML</td>
+            <td>Complete</td>
+            <td>2.0</td>
+        </tr>
+    </table>
+    
+    <blockquote>
+        "The terminal is not just a tool, it's a way of life."
+    </blockquote>
+    
+    <p>Visit our website at <a href="https://terminal.r3x.sh">terminal.r3x.sh</a> for more information.</p>
+    
+    <hr>
+    
+    <p><em>Copyright 2025 - Terminal Web Project</em></p>
+</body>
+</html>`,
+                parent_path: '/samples',
+                mime_type: 'text/html',
+                sort_order: 3
+            },
+            {
+                path: '/samples/code.js',
+                type: 'file',
+                title: 'JavaScript Example',
+                content: `// Example JavaScript file to test syntax highlighting
+import { Terminal } from 'xterm';
+import { FitAddon } from 'xterm-addon-fit';
+
+class TerminalEmulator {
+    constructor(container) {
+        this.terminal = new Terminal({
+            theme: {
+                background: '#1e1e1e',
+                foreground: '#d4d4d4',
+                cursor: '#ffffff'
+            },
+            fontSize: 14,
+            fontFamily: 'Consolas, Monaco, monospace'
+        });
+        
+        this.fitAddon = new FitAddon();
+        this.terminal.loadAddon(this.fitAddon);
+    }
+    
+    async initialize() {
+        // Initialize the terminal
+        this.terminal.open(document.getElementById('terminal'));
+        this.fitAddon.fit();
+        
+        // Set up event handlers
+        this.terminal.onData(data => {
+            this.handleInput(data);
+        });
+        
+        // Display welcome message
+        this.terminal.writeln('Welcome to Terminal Emulator v1.0');
+        this.terminal.writeln('Type "help" for available commands');
+        this.prompt();
+    }
+    
+    handleInput(data) {
+        switch(data) {
+            case '\\r': // Enter key
+                this.executeCommand();
+                break;
+            case '\\u007F': // Backspace
+                this.handleBackspace();
+                break;
+            default:
+                this.terminal.write(data);
+                this.currentInput += data;
+        }
+    }
+    
+    prompt() {
+        this.terminal.write('\\r\\n$ ');
+        this.currentInput = '';
+    }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    const term = new TerminalEmulator();
+    term.initialize();
+});`,
+                parent_path: '/samples',
+                mime_type: 'application/javascript',
+                sort_order: 4
+            },
+            {
+                path: '/samples/data.json',
+                type: 'file',
+                title: 'Sample JSON Data',
+                content: `{
+  "project": {
+    "name": "terminal.r3x.sh",
+    "version": "2.0.0",
+    "description": "A Unix-like terminal interface for web browsing",
+    "author": {
+      "name": "Rex Liu",
+      "email": "rex@r3x.sh",
+      "github": "https://github.com/rexliu"
+    },
+    "features": [
+      {
+        "name": "File Rendering",
+        "status": "complete",
+        "components": [
+          "Markdown Parser",
+          "CSV/TSV Tables",
+          "YAML Viewer",
+          "HTML Converter",
+          "Syntax Highlighter"
+        ]
+      },
+      {
+        "name": "Terminal Commands",
+        "status": "complete",
+        "commands": ["ls", "cd", "cat", "pwd", "clear", "help", "start"]
+      },
+      {
+        "name": "Database Integration",
+        "status": "complete",
+        "provider": "Supabase",
+        "features": ["Dynamic content", "Real-time updates", "Caching"]
+      }
+    ],
+    "statistics": {
+      "files": 127,
+      "commands": 7,
+      "renderers": 11,
+      "libraries": 6
+    },
+    "metadata": {
+      "created": "2024-12-01",
+      "updated": "2025-01-05",
+      "license": "MIT"
+    }
+  }
+}`,
+                parent_path: '/samples',
+                mime_type: 'application/json',
+                sort_order: 5
+            }
+        ];
+        
+        window.addSampleFiles = async function() {
+            addBtn.disabled = true;
+            const api = new SupabaseAPI();
+            
+            log('Starting to add sample files to database...', 'info');
+            
+            for (const file of sampleFiles) {
+                try {
+                    // Check if file already exists
+                    const { data: existing } = await api.client
+                        .from('site_content')
+                        .select('id')
+                        .eq('path', file.path)
+                        .single();
+                    
+                    if (existing) {
+                        // Update existing file
+                        const { error } = await api.client
+                            .from('site_content')
+                            .update(file)
+                            .eq('path', file.path);
+                        
+                        if (error) {
+                            log(`Error updating ${file.path}: ${error.message}`, 'error');
+                        } else {
+                            log(`Updated: ${file.path}`, 'success');
+                        }
+                    } else {
+                        // Insert new file
+                        const { error } = await api.client
+                            .from('site_content')
+                            .insert(file);
+                        
+                        if (error) {
+                            log(`Error inserting ${file.path}: ${error.message}`, 'error');
+                        } else {
+                            log(`Added: ${file.path}`, 'success');
+                        }
+                    }
+                } catch (error) {
+                    log(`Error processing ${file.path}: ${error.message}`, 'error');
+                }
+            }
+            
+            log('\n=== Sample files processing complete! ===', 'success');
+            log('\nRefresh your terminal (http://localhost:8001) and try:', 'info');
+            log('  cd samples', 'info');
+            log('  ls', 'info');
+            log('  cat test.csv', 'info');
+            log('  cat config.yaml', 'info');
+            log('  cat test.html', 'info');
+            log('  cat code.js', 'info');
+            log('  cat data.json', 'info');
+            
+            addBtn.disabled = false;
+        }
+        
+        // Auto-run on page load
+        log('Ready to add sample files. Click the button to begin.', 'info');
+    </script>
+</body>
+</html>

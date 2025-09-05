@@ -53,7 +53,7 @@ export class FileTypeDetector {
         // Data formats
         '.json': 'json',
         '.csv': 'csv',
-        '.tsv': 'csv',
+        '.tsv': 'tsv',
         
         // Documents
         '.txt': 'text',
@@ -61,11 +61,14 @@ export class FileTypeDetector {
         '.pdf': 'pdf',
         
         // Archives
-        '.zip': 'archive',
+        '.zip': 'zip',
         '.tar': 'archive',
         '.gz': 'archive',
         '.7z': 'archive',
         '.rar': 'archive',
+        '.jar': 'jar',
+        '.war': 'war',
+        '.ear': 'ear',
         
         // Binary
         '.exe': 'binary',
@@ -341,6 +344,12 @@ export class FileTypeDetector {
             'css': 'CSS Stylesheet',
             'xml': 'XML Document',
             'yaml': 'YAML Configuration',
+            'csv': 'CSV Data',
+            'tsv': 'TSV Data',
+            'zip': 'ZIP Archive',
+            'jar': 'Java Archive',
+            'war': 'Web Application Archive',
+            'ear': 'Enterprise Application Archive',
         };
         
         return descriptions[fileType] || 'Unknown File Type';

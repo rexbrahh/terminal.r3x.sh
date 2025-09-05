@@ -1,0 +1,42 @@
+application:
+  name: terminal.r3x.sh
+  version: 2.0.0
+  description: Enhanced terminal web interface
+
+server:
+  host: localhost
+  port: 8000
+  secure: false
+  cors:
+    enabled: true
+    origins:
+      - http://localhost:3000
+      - https://r3x.sh
+
+database:
+  provider: supabase
+  connection:
+    url: https://api.supabase.io
+    anon_key: ${SUPABASE_ANON_KEY}
+    service_role: ${SUPABASE_SERVICE_ROLE}
+  
+features:
+  - markdown_rendering
+  - syntax_highlighting
+  - csv_tables
+  - yaml_parsing
+  - archive_viewing
+  
+rendering:
+  max_width: 80
+  color_output: true
+  themes:
+    default:
+      background: "#0c0c0c"
+      foreground: "#00ff00"
+      cursor: "#00ff00"
+    
+build:
+  minify: false
+  source_maps: true
+  target: es2020
