@@ -1,29 +1,9 @@
-import { RendererRegistry } from '../rendering/RendererRegistry.js';
-import { MarkdownRenderer } from '../rendering/renderers/MarkdownRenderer.js';
-import { TextRenderer } from '../rendering/renderers/TextRenderer.js';
-import { JSONRenderer } from '../rendering/renderers/JSONRenderer.js';
-import { ImageRenderer } from '../rendering/renderers/ImageRenderer.js';
-import { CodeRenderer } from '../rendering/renderers/CodeRenderer.js';
-import { BinaryRenderer } from '../rendering/renderers/BinaryRenderer.js';
+import { getImprovedRendererRegistry } from '../rendering/improvedInitializeRenderers.js';
 
 export class CatCommand {
     constructor(terminal) {
         this.terminal = terminal;
-        this.rendererRegistry = new RendererRegistry();
-        this.initializeRenderers();
-    }
-
-    /**
-     * Initialize and register all available renderers
-     */
-    initializeRenderers() {
-        // Register renderers in order of preference (highest priority first)
-        this.rendererRegistry.register(new MarkdownRenderer(), 'markdown');
-        this.rendererRegistry.register(new JSONRenderer(), 'json');
-        this.rendererRegistry.register(new CodeRenderer(), ['javascript', 'typescript', 'python', 'java', 'go', 'rust', 'cpp', 'c', 'css', 'html', 'xml', 'sql', 'shell', 'yaml', 'toml', 'dockerfile', 'makefile']);
-        this.rendererRegistry.register(new ImageRenderer(), 'image');
-        this.rendererRegistry.register(new BinaryRenderer(), 'binary');
-        this.rendererRegistry.register(new TextRenderer(), ['text', 'log', 'ini', 'config', 'unknown']);
+        this.rendererRegistry = getImprovedRendererRegistry();
     }
 
     async execute(args) {
@@ -56,21 +36,37 @@ export class CatCommand {
             
             try {
                 const content = await this.terminal.fs.getContent(path);
-                const metadata = await this.terminal.fs.getMetadata(path);
                 
-                // Use the rendering system
-                const rendered = await this.rendererRegistry.render(
-                    file, 
-                    content, 
-                    metadata, 
-                    {
-                        showMetadata: options.showMetadata,
-                        maxWidth: options.maxWidth || 80,
-                        colorOutput: !options.noColor
-                    }
-                );
+                // Get file metadata
+                const metadata = {
+                    path: path,
+                    size: content.length,
+                    type: 'file', // The filesystem type, not the file format type
+                };
                 
-                results.push(rendered);
+                // Configure renderer options
+                const renderOptions = {
+                    showMetadata: options.showMetadata,
+                    colorOutput: !options.noColor,
+                    maxWidth: options.maxWidth || 80,
+                    lineNumbers: options.lineNumbers
+                };
+                
+                // Use the renderer registry to render the file
+                try {
+                    const rendered = await this.rendererRegistry.render(
+                        path,
+                        content,
+                        metadata,
+                        renderOptions
+                    );
+                    results.push(rendered);
+                } catch (renderError) {
+                    console.error('Rendering error:', renderError);
+                    // Fallback to plain text display
+                    results.push(content);
+                }
+                
             } catch (error) {
                 results.push(`cat: ${file}: ${error.message}`);
             }
@@ -93,7 +89,14 @@ export class CatCommand {
             lineNumbers: false
         };
 
-        for (const arg of args) {
+        let skipNext = false;
+        for (let i = 0; i < args.length; i++) {
+            if (skipNext) {
+                skipNext = false;
+                continue;
+            }
+            
+            const arg = args[i];
             if (arg.startsWith('-')) {
                 switch (arg) {
                     case '-m':
@@ -108,12 +111,13 @@ export class CatCommand {
                         options.noColor = true;
                         break;
                     case '-w':
+                    case '--width':
                         // Width option expects next argument
-                        const widthIndex = args.indexOf(arg) + 1;
-                        if (widthIndex < args.length) {
-                            const width = parseInt(args[widthIndex]);
+                        if (i + 1 < args.length) {
+                            const width = parseInt(args[i + 1]);
                             if (!isNaN(width) && width > 0) {
                                 options.maxWidth = width;
+                                skipNext = true;
                             }
                         }
                         break;
@@ -140,21 +144,24 @@ export class CatCommand {
         lines.push('  -m, --metadata        Show file metadata');
         lines.push('  -n, --line-numbers    Show line numbers');
         lines.push('  --no-color           Disable color output');
-        lines.push('  -w WIDTH             Set display width');
+        lines.push('  -w, --width WIDTH    Set display width');
         lines.push('');
-        lines.push('Supported file types:');
-        lines.push('  • Markdown files (.md) - Rich formatting with colors');
-        lines.push('  • Code files (.js, .py, .java, .go, .rs, .cpp, .c, .css, .html) - Syntax highlighting');
-        lines.push('  • JSON files (.json) - Pretty printing with structure analysis');
-        lines.push('  • Image files (.png, .jpg, .gif, .svg) - ASCII art representation');
-        lines.push('  • Binary files - Hex dump with file analysis');
-        lines.push('  • Text files (.txt, .log, .ini) - Enhanced text display');
+        lines.push('Supported file types with enhanced rendering:');
+        lines.push('  • Markdown (.md)     - Rich formatting with marked.js');
+        lines.push('  • Code files         - Syntax highlighting with highlight.js');
+        lines.push('  • JSON (.json)       - Pretty printing with color coding');
+        lines.push('  • CSV/TSV (.csv/.tsv)- Table rendering with PapaParse');
+        lines.push('  • YAML (.yml/.yaml)  - Structured display with js-yaml');
+        lines.push('  • HTML (.html)       - Terminal-friendly text conversion');
+        lines.push('  • Archives (.zip)    - File listing with JSZip');
+        lines.push('  • Images             - ASCII art representation');
+        lines.push('  • Binary files       - Hex dump visualization');
         lines.push('');
         lines.push('Examples:');
-        lines.push('  cat README.md                 Display with markdown rendering');
-        lines.push('  cat -m hello-world.md        Show with metadata');
-        lines.push('  cat --no-color file.txt      Display without colors');
-        lines.push('  cat -w 60 document.md        Display with 60-char width');
+        lines.push('  cat README.md                Display with markdown rendering');
+        lines.push('  cat -m data.csv             Show CSV with metadata');
+        lines.push('  cat --no-color config.yaml  Display YAML without colors');
+        lines.push('  cat -w 60 document.html     Render HTML with 60-char width');
         return lines.join('\r\n');
     }
 }

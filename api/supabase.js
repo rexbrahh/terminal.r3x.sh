@@ -26,6 +26,9 @@ class SupabaseAPI {
       SUPABASE_ANON_KEY,
     );
     
+    // Expose client for external use
+    this.client = this.supabase;
+    
     console.log('✅ Supabase client created:', this.supabase);
   }
 
