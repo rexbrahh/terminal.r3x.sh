@@ -3,7 +3,6 @@ class BootSequence {
     this.terminal = terminal;
     this.isSkipped = false;
     this.skipHandler = null;
-    this.mobileSkipHandler = null;
     this.spinnerFrames = ["-", "\\", "|", "/"];
     this.spinnerIndex = 0;
     this.finalStateShown = false; // Prevent duplicate final state calls
@@ -18,7 +17,7 @@ class BootSequence {
 
     try {
       // Show skip hint
-      await this.writeLine("\x1b[90m// Press Enter (or tap ⏎ button) to skip\x1b[0m");
+      await this.writeLine("\x1b[90m// Press Enter to skip\x1b[0m");
       if (this.isSkipped) {
         this.handleSkipTransition();
         return;
@@ -149,28 +148,6 @@ class BootSequence {
     if (terminalContainer) {
       terminalContainer.addEventListener("keydown", this.skipHandler, true);
     }
-
-    // Mobile enter button handler
-    const mobileEnterBtn = document.getElementById('mobile-enter-btn');
-    if (mobileEnterBtn) {
-      this.mobileSkipHandler = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (!this.isSkipped) {
-          this.isSkipped = true;
-          console.log("Skip triggered (mobile button)");
-          // Don't do anything else - let the main loop handle the transition
-        }
-      };
-      
-      mobileEnterBtn.addEventListener('click', this.mobileSkipHandler);
-      mobileEnterBtn.addEventListener('touchend', this.mobileSkipHandler);
-      
-      // Show mobile enter button during boot sequence with animation
-      mobileEnterBtn.style.display = 'flex';
-      mobileEnterBtn.style.opacity = '1';
-      mobileEnterBtn.classList.add('boot-sequence');
-    }
   }
 
   cleanup() {
@@ -185,20 +162,6 @@ class BootSequence {
       }
       
       this.skipHandler = null;
-    }
-
-    // Remove mobile button handlers and stop boot animation
-    const mobileEnterBtn = document.getElementById('mobile-enter-btn');
-    if (mobileEnterBtn && this.mobileSkipHandler) {
-      mobileEnterBtn.removeEventListener('click', this.mobileSkipHandler);
-      mobileEnterBtn.removeEventListener('touchend', this.mobileSkipHandler);
-      this.mobileSkipHandler = null;
-      
-      // Remove boot sequence animation class
-      mobileEnterBtn.classList.remove('boot-sequence');
-      
-      // Keep button visible but change its function for normal terminal use
-      // (The terminal.js setupMobileEnterButton will handle it from here)
     }
 
     // Update last login time for next visit
