@@ -34,7 +34,7 @@ export class CatCommand {
 
 
     renderMarkdown(content) {
-        // Simple markdown to terminal rendering
+        // Simple markdown to terminal rendering with proper line wrapping
         let rendered = content;
         
         // Headers
@@ -66,7 +66,88 @@ export class CatCommand {
         // Horizontal rules
         rendered = rendered.replace(/^---$/gm, '─'.repeat(60));
         
-        return rendered;
+        // Now apply proper line wrapping and formatting
+        return this.formatForTerminal(rendered);
+    }
+
+    formatForTerminal(text) {
+        const lines = text.split('\n');
+        const formattedLines = [];
+        const maxWidth = 80; // Terminal width
+        
+        for (let line of lines) {
+            // Skip empty lines (preserve spacing)
+            if (line.trim() === '') {
+                formattedLines.push('');
+                continue;
+            }
+            
+            // Don't wrap headers, lists, or code
+            if (line.match(/^(\x1b\[\d+m)?(#{1,3}|•|-|\d+\.|  )/)) {
+                formattedLines.push(line);
+                continue;
+            }
+            
+            // Wrap long paragraphs
+            if (line.length > maxWidth) {
+                const wrapped = this.wrapText(line, maxWidth);
+                formattedLines.push(...wrapped);
+            } else {
+                formattedLines.push(line);
+            }
+        }
+        
+        // Add proper spacing between sections
+        const result = [];
+        for (let i = 0; i < formattedLines.length; i++) {
+            const current = formattedLines[i];
+            const next = formattedLines[i + 1];
+            
+            result.push(current);
+            
+            // Add extra line after headers
+            if (current.match(/^(\x1b\[\d+m)?#{1,3}/) && next && next.trim() !== '') {
+                result.push('');
+            }
+        }
+        
+        return result.join('\n');
+    }
+
+    wrapText(text, width) {
+        // Handle ANSI escape codes properly
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = '';
+        let currentLength = 0;
+        
+        for (const word of words) {
+            // Calculate actual display length (ignoring ANSI codes)
+            const wordDisplayLength = word.replace(/\x1b\[[0-9;]*m/g, '').length;
+            
+            // If adding this word would exceed width, start new line
+            if (currentLength + wordDisplayLength + 1 > width && currentLine !== '') {
+                lines.push(currentLine);
+                currentLine = word;
+                currentLength = wordDisplayLength;
+            } else {
+                // Add word to current line
+                if (currentLine === '') {
+                    currentLine = word;
+                    currentLength = wordDisplayLength;
+                } else {
+                    currentLine += ' ' + word;
+                    currentLength += wordDisplayLength + 1;
+                }
+            }
+        }
+        
+        // Add the last line
+        if (currentLine !== '') {
+            lines.push(currentLine);
+        }
+        
+        return lines;
     }
 
     getHelp() {
