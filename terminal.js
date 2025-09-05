@@ -60,7 +60,6 @@ class TerminalSite {
     
     // Only set up handlers and prompt after boot sequence
     this.setupEventHandlers();
-    this.setupMobileEnterButton();
     this.prompt();
   }
 
@@ -335,60 +334,6 @@ class TerminalSite {
 
   write(text) {
     this.term.write(text);
-  }
-
-  setupMobileEnterButton() {
-    const mobileEnterBtn = document.getElementById('mobile-enter-btn');
-    if (mobileEnterBtn) {
-      // Handle both click and touch events for better mobile support
-      mobileEnterBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        this.handleCommand();
-      });
-
-      mobileEnterBtn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        this.handleCommand();
-      });
-
-      // Prevent default touch behaviors that might interfere
-      mobileEnterBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-      });
-    }
-
-    // Enhanced mobile keyboard support with multiple event types
-    this.lastCommandTime = 0;
-    
-    // Primary keydown handler
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.ctrlKey && !e.altKey && !e.metaKey) {
-        // Give xterm a brief moment to handle it first
-        setTimeout(() => {
-          const now = Date.now();
-          // If no command was executed in the last 100ms, handle it manually
-          if (now - this.lastCommandTime > 100) {
-            console.log('Mobile fallback: handling Enter key');
-            this.handleCommand();
-          }
-        }, 50);
-      }
-    });
-    
-    // Additional keypress handler for older mobile browsers
-    document.addEventListener('keypress', (e) => {
-      if ((e.key === 'Enter' || e.keyCode === 13) && !e.ctrlKey && !e.altKey && !e.metaKey) {
-        setTimeout(() => {
-          const now = Date.now();
-          if (now - this.lastCommandTime > 100) {
-            console.log('Mobile fallback (keypress): handling Enter key');
-            this.handleCommand();
-          }
-        }, 50);
-      }
-    });
   }
 }
 
