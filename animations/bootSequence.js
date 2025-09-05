@@ -3,45 +3,38 @@ class BootSequence {
     this.terminal = terminal;
     this.isSkipped = false;
     this.skipHandler = null;
+    this.mobileSkipHandler = null;
     this.spinnerFrames = ["-", "\\", "|", "/"];
     this.spinnerIndex = 0;
+    this.finalStateShown = false; // Prevent duplicate final state calls
   }
 
   async run() {
     console.log("Boot sequence starting...");
     this.isSkipped = false;
 
-    // Set up skip handler
-    this.skipHandler = (e) => {
-      if (e.key === "Enter") {
-        this.isSkipped = true;
-        console.log("Skip triggered");
-      }
-    };
-    document.addEventListener("keydown", this.skipHandler);
+    // Set up enhanced skip handlers for both desktop and mobile
+    this.setupSkipHandlers();
 
     try {
       // Show skip hint
-      await this.writeLine("\x1b[90m// Press Enter to skip\x1b[0m");
-
+      await this.writeLine("\x1b[90m// Press Enter (or tap ⏎ button) to skip\x1b[0m");
       if (this.isSkipped) {
-        this.showFinalState();
+        this.handleSkipTransition();
         return;
       }
 
       // Login message
       await this.writeLine("Logged in as guest@r3x.sh");
-
       if (this.isSkipped) {
-        this.showFinalState();
+        this.handleSkipTransition();
         return;
       }
 
       // Loading animation with spinner
       await this.showLoadingAnimation();
-
       if (this.isSkipped) {
-        this.showFinalState();
+        this.handleSkipTransition();
         return;
       }
 
@@ -50,39 +43,46 @@ class BootSequence {
 
       // Typewriter welcome message with line breaks
       await this.typewriterEffect("Hello, visitor.");
-      if (!this.isSkipped) {
-        await this.blinkCursorRandom(); // Random 1-10 blinks
-        this.terminal.write(" "); // Space before next sentence
-      }
-
       if (this.isSkipped) {
-        this.showFinalState();
+        this.handleSkipTransition();
         return;
       }
-
-      await this.typewriterEffect(
-        "You are now visiting Rex's personal website.",
-      );
-      if (!this.isSkipped) {
-        await this.blinkCursorRandom(); // Random 1-10 blinks
-        this.terminal.writeln(""); // New line
-      }
-
+      
+      await this.blinkCursorRandom();
       if (this.isSkipped) {
-        this.showFinalState();
+        this.handleSkipTransition();
         return;
       }
+      
+      this.terminal.write(" "); // Space before next sentence
+
+      await this.typewriterEffect("You are now visiting Rex's personal website.");
+      if (this.isSkipped) {
+        this.handleSkipTransition();
+        return;
+      }
+      
+      await this.blinkCursorRandom();
+      if (this.isSkipped) {
+        this.handleSkipTransition();
+        return;
+      }
+      
+      this.terminal.writeln(""); // New line
 
       await this.typewriterEffect("Here are some tips to get started:");
-      if (!this.isSkipped) {
-        await this.blinkCursorRandom(); // Random 1-10 blinks
-        this.terminal.writeln(""); // New line
-      }
-
       if (this.isSkipped) {
-        this.showFinalState();
+        this.handleSkipTransition();
         return;
       }
+      
+      await this.blinkCursorRandom();
+      if (this.isSkipped) {
+        this.handleSkipTransition();
+        return;
+      }
+      
+      this.terminal.writeln(""); // New line
 
       // Add pause before clearing
       await this.randomPause(500, 800);
@@ -94,10 +94,30 @@ class BootSequence {
     }
   }
 
-  showFinalState() {
-    // Clear the terminal
-    this.terminal.clear();
 
+  handleSkipTransition() {
+    // This is the ONLY place that handles skip transition
+    // Clear everything properly
+    
+    // Step 1: Reset terminal to clean state
+    this.terminal.reset();
+    
+    // Step 2: Clear screen with ANSI codes
+    this.terminal.write('\x1b[2J\x1b[3J\x1b[H');
+    
+    // Step 3: Use xterm's clear method
+    this.terminal.clear();
+    
+    // Step 4: Show final state
+    this.showFinalState();
+  }
+
+  showFinalState() {
+    // Prevent duplicate calls
+    if (this.finalStateShown) return;
+    this.finalStateShown = true;
+    
+    // Don't clear here - assume we're starting from clean state
     // Show only the final state
     const lastLogin = this.getLastLoginTime();
     this.terminal.writeln(`Last login: ${lastLogin}`);
@@ -108,11 +128,77 @@ class BootSequence {
     this.terminal.writeln("");
   }
 
+  setupSkipHandlers() {
+    // Desktop keyboard handler with aggressive event capture to override xterm
+    this.skipHandler = (e) => {
+      if (e.key === "Enter" && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault(); // Prevent any default handling
+        e.stopImmediatePropagation(); // Stop all other listeners from running
+        if (!this.isSkipped) {
+          this.isSkipped = true;
+          console.log("Skip triggered (keyboard)");
+          // Don't do anything else - let the main loop handle the transition
+        }
+      }
+    };
+    // Use capture phase and add as early as possible in the event chain
+    document.addEventListener("keydown", this.skipHandler, true);
+    
+    // Also add handler specifically to terminal container for better mobile support
+    const terminalContainer = document.getElementById('terminal-container');
+    if (terminalContainer) {
+      terminalContainer.addEventListener("keydown", this.skipHandler, true);
+    }
+
+    // Mobile enter button handler
+    const mobileEnterBtn = document.getElementById('mobile-enter-btn');
+    if (mobileEnterBtn) {
+      this.mobileSkipHandler = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!this.isSkipped) {
+          this.isSkipped = true;
+          console.log("Skip triggered (mobile button)");
+          // Don't do anything else - let the main loop handle the transition
+        }
+      };
+      
+      mobileEnterBtn.addEventListener('click', this.mobileSkipHandler);
+      mobileEnterBtn.addEventListener('touchend', this.mobileSkipHandler);
+      
+      // Show mobile enter button during boot sequence with animation
+      mobileEnterBtn.style.display = 'flex';
+      mobileEnterBtn.style.opacity = '1';
+      mobileEnterBtn.classList.add('boot-sequence');
+    }
+  }
+
   cleanup() {
-    // Remove event listener
+    // Remove event listeners
     if (this.skipHandler) {
-      document.removeEventListener("keydown", this.skipHandler);
+      document.removeEventListener("keydown", this.skipHandler, true);
+      
+      // Also remove from terminal container
+      const terminalContainer = document.getElementById('terminal-container');
+      if (terminalContainer) {
+        terminalContainer.removeEventListener("keydown", this.skipHandler, true);
+      }
+      
       this.skipHandler = null;
+    }
+
+    // Remove mobile button handlers and stop boot animation
+    const mobileEnterBtn = document.getElementById('mobile-enter-btn');
+    if (mobileEnterBtn && this.mobileSkipHandler) {
+      mobileEnterBtn.removeEventListener('click', this.mobileSkipHandler);
+      mobileEnterBtn.removeEventListener('touchend', this.mobileSkipHandler);
+      this.mobileSkipHandler = null;
+      
+      // Remove boot sequence animation class
+      mobileEnterBtn.classList.remove('boot-sequence');
+      
+      // Keep button visible but change its function for normal terminal use
+      // (The terminal.js setupMobileEnterButton will handle it from here)
     }
 
     // Update last login time for next visit
@@ -127,6 +213,8 @@ class BootSequence {
   }
 
   async showLoadingAnimation() {
+    if (this.isSkipped) return;
+    
     // Random duration between 1-3 seconds
     const duration = 1000 + Math.random() * 2000;
     const startTime = Date.now();
@@ -135,6 +223,8 @@ class BootSequence {
     this.terminal.write("Loading ");
 
     while (Date.now() - startTime < duration && !this.isSkipped) {
+      if (this.isSkipped) return;
+      
       // Write spinner frame with backspaces to overwrite previous frame
       this.terminal.write(`[${this.spinnerFrames[this.spinnerIndex]}]`);
 
@@ -144,15 +234,16 @@ class BootSequence {
       // Wait for next frame
       await this.sleep(frameDelay);
 
+      if (this.isSkipped) return;
+
       // Backspace 3 chars (for [x]) if not last iteration
       if (Date.now() - startTime < duration && !this.isSkipped) {
         this.terminal.write("\b\b\b");
       }
     }
 
-    // Clear the entire loading line
+    // Clear the entire loading line if completed normally
     if (!this.isSkipped) {
-      // Move cursor to beginning of line and clear it
       this.terminal.write("\r\x1b[K");
     }
   }
@@ -168,13 +259,23 @@ class BootSequence {
     const blinkDelay = 250; // 250ms on, 250ms off = 500ms per blink
 
     for (let i = 0; i < times && !this.isSkipped; i++) {
+      if (this.isSkipped) return;
+      
       // Show cursor
       this.terminal.write(cursor);
       await this.sleep(blinkDelay);
+      
+      if (this.isSkipped) {
+        // Clean up cursor if skipped
+        this.terminal.write("\b ");
+        return;
+      }
 
       // Hide cursor (backspace and space)
       this.terminal.write("\b ");
       await this.sleep(blinkDelay);
+      
+      if (this.isSkipped) return;
 
       // Move cursor back
       this.terminal.write("\b");
@@ -186,6 +287,8 @@ class BootSequence {
     let lastWasSpace = false;
     
     for (let i = 0; i < text.length && !this.isSkipped; i++) {
+      if (this.isSkipped) return;
+      
       this.terminal.write(text[i]);
 
       // Don't add delay after the last character
@@ -288,7 +391,19 @@ class BootSequence {
   }
 
   sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => {
+      const checkInterval = 50; // Check skip status every 50ms
+      let elapsed = 0;
+      
+      const timer = setInterval(() => {
+        elapsed += checkInterval;
+        
+        if (this.isSkipped || elapsed >= ms) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, checkInterval);
+    });
   }
 
   randomPause(min, max) {
