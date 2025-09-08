@@ -20,6 +20,14 @@ export class SudoCommand {
       sudoManager.clear();
       return 'sudo: credentials cleared\r\n';
     }
+    if (args[0] === '--persist') {
+      const v = (args[1] || '').toLowerCase();
+      if (v !== 'on' && v !== 'off') {
+        return 'sudo: --persist requires on|off\\r\\n';
+      }
+      sudoManager.setPersist(v === 'on');
+      return `sudo: session persistence ${v}\\r\\n`;
+    }
     if (args[0] === 'status') {
       const ok = sudoManager.isElevated();
       const until = ok ? new Date(sudoManager.exp).toLocaleTimeString() : 'n/a';
@@ -49,12 +57,12 @@ export class SudoCommand {
   getHelp() {
     return [
       'sudo - run a command with elevated privileges',
-      'Usage: sudo [-s|-k|status] [COMMAND [ARGS...]]',
+      'Usage: sudo [-s|-k|status|--persist on|off] [COMMAND [ARGS...]]',
       '  -s        Start a sudo session (prompt for password)',
       '  -k        Revoke sudo credentials',
       '  status    Show sudo state',
+      '  --persist on|off  Remember sudo token for the session',
       'If COMMAND is provided, it will run after successful authentication.',
     ].join('\r\n');
   }
 }
-
