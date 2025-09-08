@@ -135,6 +135,25 @@ export class DatabaseFileSystem {
         };
     }
 
+    // Lightweight stat for policy checks and tools
+    stat(path) {
+        path = this.normalizePath(path);
+        const item = this.structure?.get(path);
+        if (!item) return null;
+        const size = typeof item.content === 'string' ? item.content.length : 0;
+        return {
+            exists: true,
+            path,
+            isDirectory: item.type === 'directory',
+            type: item.type,
+            size,
+            mime_type: item.mime_type || 'text/plain',
+            title: item.title,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+        };
+    }
+
     // Path utilities
     normalizePath(path) {
         if (!path || path === '.') return '/';
