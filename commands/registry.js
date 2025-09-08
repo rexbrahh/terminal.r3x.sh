@@ -10,6 +10,9 @@ import { HeadCommand } from './head.js';
 import { TailCommand } from './tail.js';
 import { DownloadCommand } from './download.js';
 import { LessCommand } from './less.js';
+import { ViewCommand } from './view.js';
+import { VimCommand } from './vim.js';
+import { SudoCommand } from './sudo.js';
 
 export class CommandRegistry {
     constructor(terminal) {
@@ -31,6 +34,9 @@ export class CommandRegistry {
         this.register('tail', new TailCommand(this.terminal));
         this.register('download', new DownloadCommand(this.terminal));
         this.register('less', new LessCommand(this.terminal));
+        this.register('view', new ViewCommand(this.terminal));
+        this.register('vim', new VimCommand(this.terminal));
+        this.register('sudo', new SudoCommand(this.terminal));
         
         // Aliases
         this.register('ll', new LsCommand(this.terminal, { detailed: true }));
