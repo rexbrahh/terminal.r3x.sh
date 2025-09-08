@@ -4,6 +4,7 @@ import { CatCommand } from './cat.js';
 import { PwdCommand } from './pwd.js';
 import { ClearCommand } from './clear.js';
 import { HelpCommand } from './help.js';
+import { EditorCommand } from './editor.js';
 import { StartCommand } from './start.js';
 import { FileCommand } from './file.js';
 import { HeadCommand } from './head.js';
@@ -29,14 +30,7 @@ export class CommandRegistry {
         this.register('clear', new ClearCommand(this.terminal));
         this.register('help', new HelpCommand(this.terminal));
         this.register('start', new StartCommand(this.terminal));
-        this.register('file', new FileCommand(this.terminal));
-        this.register('head', new HeadCommand(this.terminal));
-        this.register('tail', new TailCommand(this.terminal));
-        this.register('download', new DownloadCommand(this.terminal));
-        this.register('less', new LessCommand(this.terminal));
-        this.register('view', new ViewCommand(this.terminal));
-        this.register('vim', new VimCommand(this.terminal));
-        this.register('sudo', new SudoCommand(this.terminal));
+        this.register('editor', new EditorCommand(this.terminal));
         
         // Aliases
         this.register('ll', new LsCommand(this.terminal, { detailed: true }));
