@@ -2,6 +2,7 @@ import { DatabaseFileSystem } from "./filesystem/DatabaseFileSystem.js";
 import { CommandRegistry } from "./commands/registry.js";
 import BootSequence from "./animations/bootSequence.js";
 import { SupabaseAPI } from "./api/supabase.js";
+import { sudoManager } from "./security/SudoManager.js";
 
 class TerminalSite {
   constructor() {
@@ -17,6 +18,8 @@ class TerminalSite {
     this.cursorPosition = 0;
     this.username = "guest";
     this.hostname = "r3x.sh";
+    this.bottomGapRows = 10; // extra blank rows after prompt for scroll comfort
+    this.inputPaused = false; // when overlays capture keyboard
   }
 
   async init() {
@@ -113,15 +116,30 @@ class TerminalSite {
         : this.currentPath === "/"
           ? "/"
           : this.currentPath;
-    const promptStr = `\x1b[32m${this.username}@${this.hostname}\x1b[0m:\x1b[34m${path}\x1b[0m$ `;
+    const elevated = sudoManager?.isElevated?.() || false;
+    const sigil = elevated ? '#' : '$';
+    const sigilColor = elevated ? '\x1b[31m' : '';
+    const promptStr = `\x1b[32m${this.username}@${this.hostname}\x1b[0m: \x1b[34m${path}\x1b[0m ${sigilColor}${sigil}\x1b[0m `;
+    // Ensure viewport sits at bottom and provide a blank line before prompt
+    try { this.term.scrollToBottom(); } catch {}
     this.term.writeln("");
     this.term.write(promptStr);
+    // Inject a few blank lines after the prompt so users can scroll the prompt upward
+    // Save cursor -> write gap -> restore cursor
+    if (this.bottomGapRows > 0) {
+      try {
+        this.term.write("\x1b[s"); // save cursor
+        this.term.write("\r\n".repeat(this.bottomGapRows));
+        this.term.write("\x1b[u"); // restore cursor
+      } catch {}
+    }
     this.currentLine = "";
     this.cursorPosition = 0;
   }
 
   setupEventHandlers() {
     this.term.onData((data) => {
+      if (this.inputPaused) return;
       // Log all data for debugging mobile keyboard issues
       console.log('xterm onData received:', JSON.stringify(data), 'charCodes:', [...data].map(c => c.charCodeAt(0)));
       
@@ -159,6 +177,9 @@ class TerminalSite {
       }
     });
   }
+
+  pauseInput() { this.inputPaused = true; }
+  resumeInput() { this.inputPaused = false; }
 
   handleCommand() {
     // Track when commands are executed for mobile fallback detection
