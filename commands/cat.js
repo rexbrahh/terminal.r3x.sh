@@ -1,9 +1,11 @@
 import { getImprovedRendererRegistry } from '../rendering/improvedInitializeRenderers.js';
+import { FilePolicy } from '../policy/FilePolicy.js';
 
 export class CatCommand {
     constructor(terminal) {
         this.terminal = terminal;
         this.rendererRegistry = getImprovedRendererRegistry();
+        this.policy = new FilePolicy();
     }
 
     async execute(args) {
@@ -35,38 +37,43 @@ export class CatCommand {
             }
             
             try {
+                const stat = this.terminal.fs.stat?.(path);
+                const analysis = this.policy.analyze({
+                    path,
+                    mime: stat?.mime_type,
+                    size: stat?.size,
+                });
+                if (!analysis.allowed) {
+                    results.push(`cat: ${file}: ${analysis.reason} (${analysis.mime || 'unknown'}) — ${this.policy.suggestForBlock(analysis)}`);
+                    continue;
+                }
                 const content = await this.terminal.fs.getContent(path);
-                
-                // Get file metadata
+
                 const metadata = {
                     path: path,
                     size: content.length,
-                    type: 'file', // The filesystem type, not the file format type
+                    type: 'file',
                 };
-                
-                // Configure renderer options
+
                 const renderOptions = {
                     showMetadata: options.showMetadata,
                     colorOutput: !options.noColor,
                     maxWidth: options.maxWidth || 80,
-                    lineNumbers: options.lineNumbers
+                    lineNumbers: options.lineNumbers,
                 };
-                
-                // Use the renderer registry to render the file
+
                 try {
                     const rendered = await this.rendererRegistry.render(
                         path,
                         content,
                         metadata,
-                        renderOptions
+                        renderOptions,
                     );
                     results.push(rendered);
                 } catch (renderError) {
                     console.error('Rendering error:', renderError);
-                    // Fallback to plain text display
                     results.push(content);
                 }
-                
             } catch (error) {
                 results.push(`cat: ${file}: ${error.message}`);
             }
@@ -146,6 +153,7 @@ export class CatCommand {
         lines.push('  --no-color           Disable color output');
         lines.push('  -w, --width WIDTH    Set display width');
         lines.push('');
+        lines.push('Note: Only text files within size limits are shown.');
         lines.push('Supported file types with enhanced rendering:');
         lines.push('  • Markdown (.md)     - Rich formatting with marked.js');
         lines.push('  • Code files         - Syntax highlighting with highlight.js');
