@@ -6,6 +6,14 @@ import { ClearCommand } from './clear.js';
 import { HelpCommand } from './help.js';
 import { EditorCommand } from './editor.js';
 import { StartCommand } from './start.js';
+import { FileCommand } from './file.js';
+import { HeadCommand } from './head.js';
+import { TailCommand } from './tail.js';
+import { DownloadCommand } from './download.js';
+import { LessCommand } from './less.js';
+import { ViewCommand } from './view.js';
+import { VimCommand } from './vim.js';
+import { SudoCommand } from './sudo.js';
 
 export class CommandRegistry {
     constructor(terminal) {

@@ -135,6 +135,157 @@ export class DatabaseFileSystem {
         };
     }
 
+    // Lightweight stat for policy checks and tools
+    stat(path) {
+        path = this.normalizePath(path);
+        const item = this.structure?.get(path);
+        if (!item) return null;
+        const size = typeof item.content === 'string' ? item.content.length : 0;
+        return {
+            exists: true,
+            path,
+            isDirectory: item.type === 'directory',
+            type: item.type,
+            size,
+            mime_type: item.mime_type || 'text/plain',
+            title: item.title,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+        };
+    }
+
+    async writeFile(path, content, options = {}) {
+        path = this.normalizePath(path);
+        const item = this.structure?.get(path);
+        // Route writes through Edge Function with sudo token
+        try {
+            const token = (await import('../security/SudoManager.js')).sudoManager.getToken();
+            if (!token) throw new Error('Unauthorized: sudo required');
+
+            const body = {
+                path,
+                content,
+                prevUpdatedAt: options.expectedUpdatedAt || (item && item.updated_at) || null,
+                force: !!options.force,
+                allowCreate: !!options.allowCreate,
+            };
+            const { data, error, status } = await this.api.invokeFunction('save-file', body, { 'X-Sudo-Token': token });
+            if (error || (status && status >= 400)) {
+                if (status === 401 || status === 403) throw new Error('Unauthorized: sudo required');
+                if (status === 409) throw new Error('Save conflict: file changed remotely');
+                throw new Error(typeof error === 'string' ? error : (error?.message || 'Failed'));
+            }
+            const updatedAt = data?.updatedAt || new Date().toISOString();
+            // reflect locally without hitting DB again
+            this.updateLocalFile(path, content, updatedAt);
+            return true;
+        } catch (e) {
+            console.error('writeFile failed', e);
+            throw e;
+        }
+    }
+
+    updateLocalFile(path, content, updatedAt, mime) {
+        path = this.normalizePath(path);
+        const item = this.structure?.get(path);
+        if (item) {
+            item.content = content;
+            item.updated_at = updatedAt;
+            if (mime) item.mime_type = mime;
+        } else {
+            // Create local entry (used when creating a new file via function)
+            const parent = path.split('/').slice(0, -1).join('/') || '/';
+            const name = path.split('/').pop();
+            this.structure.set(path, {
+                path,
+                type: 'file',
+                title: name,
+                content,
+                parent_path: parent === '/' ? null : parent,
+                mime_type: mime || 'text/plain',
+                created_at: updatedAt,
+                updated_at: updatedAt,
+            });
+            const parentItem = this.structure.get(parent);
+            if (parentItem && Array.isArray(parentItem.children)) {
+                if (!parentItem.children.includes(name)) {
+                    parentItem.children.push(name);
+                    parentItem.children.sort();
+                }
+            }
+        }
+        const cacheKey = `content:${path}`;
+        this.cache.set(cacheKey, { content, timestamp: Date.now() });
+    }
+
+    async createOrUpdateFile(path, content, meta = {}) {
+        path = this.normalizePath(path);
+        const parent = path.split('/').slice(0, -1).join('/') || '/';
+        const name = path.split('/').pop();
+        const parentItem = this.structure?.get(parent);
+        if (!parentItem || parentItem.type !== 'directory') {
+            throw new Error('Parent directory does not exist');
+        }
+        const nowIso = new Date().toISOString();
+        const record = {
+            path,
+            type: 'file',
+            title: name,
+            content,
+            parent_path: parent === '/' ? null : parent,
+            mime_type: meta.mime_type || 'text/plain',
+            updated_at: nowIso,
+            published: true,
+        };
+        try {
+            let { data, error } = await this.api.supabase
+                .from('site_content')
+                .insert(record)
+                .select('updated_at');
+            if (error && !String(error.message).includes('duplicate')) throw error;
+            if (error && String(error.message).includes('duplicate')) {
+                // fallback to update without concurrency condition
+                ({ data, error } = await this.api.supabase
+                    .from('site_content')
+                    .update({ content, updated_at: nowIso })
+                    .eq('path', path)
+                    .select('updated_at'));
+                if (error) throw error;
+            }
+
+            // Update local structure/cache
+            const existed = this.structure.get(path);
+            if (!existed) {
+                this.structure.set(path, {
+                    path,
+                    type: 'file',
+                    title: name,
+                    content,
+                    parent_path: parent,
+                    mime_type: record.mime_type,
+                    updated_at: data?.[0]?.updated_at || nowIso,
+                    created_at: nowIso,
+                });
+                // update parent children list
+                const children = this.structure.get(parent)?.children || [];
+                if (!children.includes(name)) {
+                    children.push(name);
+                    children.sort();
+                    this.structure.get(parent).children = children;
+                }
+            } else {
+                existed.content = content;
+                existed.updated_at = data?.[0]?.updated_at || nowIso;
+            }
+            const cacheKey = `content:${path}`;
+            this.cache.set(cacheKey, { content, timestamp: Date.now() });
+            return true;
+        } catch (e) {
+            console.error('createOrUpdateFile failed', e);
+            throw new Error('Failed to save');
+        }
+    }
+
     // Path utilities
     normalizePath(path) {
         if (!path || path === '.') return '/';

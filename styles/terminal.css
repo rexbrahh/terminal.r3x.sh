@@ -144,6 +144,13 @@ body {
     text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
 }
 
+/* Add a small bottom gap so the active prompt isn't flush to the border */
+.xterm .xterm-rows::after {
+    content: "";
+    display: block;
+    height: var(--term-bottom-gap, 24px);
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
     #terminal-container {
