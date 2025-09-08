@@ -5,6 +5,11 @@ import { PwdCommand } from './pwd.js';
 import { ClearCommand } from './clear.js';
 import { HelpCommand } from './help.js';
 import { StartCommand } from './start.js';
+import { FileCommand } from './file.js';
+import { HeadCommand } from './head.js';
+import { TailCommand } from './tail.js';
+import { DownloadCommand } from './download.js';
+import { LessCommand } from './less.js';
 
 export class CommandRegistry {
     constructor(terminal) {
@@ -21,6 +26,11 @@ export class CommandRegistry {
         this.register('clear', new ClearCommand(this.terminal));
         this.register('help', new HelpCommand(this.terminal));
         this.register('start', new StartCommand(this.terminal));
+        this.register('file', new FileCommand(this.terminal));
+        this.register('head', new HeadCommand(this.terminal));
+        this.register('tail', new TailCommand(this.terminal));
+        this.register('download', new DownloadCommand(this.terminal));
+        this.register('less', new LessCommand(this.terminal));
         
         // Aliases
         this.register('ll', new LsCommand(this.terminal, { detailed: true }));
