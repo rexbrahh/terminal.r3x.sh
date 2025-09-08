@@ -19,7 +19,7 @@ export class ViewCommand {
     if (analysis.tooLarge) return `view: ${input}: file exceeds size limit — ${this.policy.suggestForBlock(analysis)}\r\n`;
 
     const content = await this.terminal.fs.getContent(path) || '';
-    const overlay = new VimOverlay({ path, content, readOnly: true, api: this.terminal.api, onSave: async (savePath, text, opts) => {
+    const overlay = new VimOverlay({ path, content, readOnly: true, api: this.terminal.api, preferFallback: true, onOpen: () => this.terminal.pauseInput(), onClose: () => this.terminal.resumeInput(), onSave: async (savePath, text, opts) => {
       // view is read-only; allow Save As to a different path when using fallback editor
       const norm = this.terminal.fs.normalizePath(savePath);
       const same = norm === path;

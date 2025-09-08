@@ -58,7 +58,11 @@ export class SudoOverlay {
     this.setStatus('Authenticating…');
     const { data, error, status } = await this.api.invokeFunction('sudo-login', { password: pwd });
     if (error || status >= 400) {
-      this.setStatus('Authentication failed');
+      let msg = 'Authentication failed';
+      const reason = (typeof error === 'string' ? error : error?.error) || '';
+      if (reason === 'origin') msg = 'Origin not allowed (check ALLOWED_ORIGINS)';
+      else if (reason === 'password' || reason === 'auth') msg = 'Wrong password';
+      this.setStatus(msg);
       return;
     }
     const { token, exp } = data || {};
@@ -91,4 +95,3 @@ export class SudoOverlay {
     document.head.appendChild(style);
   }
 }
-
