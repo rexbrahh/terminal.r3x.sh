@@ -34,16 +34,21 @@ export class CMVimOverlay {
       this.container.querySelector('.cm-editor-host').focus();
     } catch (e) {
       this.updateStatus(`Failed to load editor: ${e?.message || e}`);
+      // Close self and propagate so caller can fall back to pager
+      try { this.close(); } catch {}
+      throw e;
     }
   }
 
   async loadCodeMirror() {
-    // Use ESM CDN bundles for browser
+    // Load non-bundled modules so they share a single @codemirror/state instance.
+    // Using "?bundle" causes each import to include its own copy of state/view,
+    // which breaks instanceof checks inside CodeMirror.
     const [state, view, basic, vimMod] = await Promise.all([
-      import('https://esm.sh/@codemirror/state@6?bundle'),
-      import('https://esm.sh/@codemirror/view@6?bundle'),
-      import('https://esm.sh/@codemirror/basic-setup@0.19.3?bundle'),
-      import('https://esm.sh/@replit/codemirror-vim@6.0.1?bundle'),
+      import('https://esm.sh/@codemirror/state@6'),
+      import('https://esm.sh/@codemirror/view@6'),
+      import('https://esm.sh/codemirror@6'), // provides basicSetup
+      import('https://esm.sh/@replit/codemirror-vim@6.0.1'),
     ]);
     return {
       EditorState: state.EditorState,
@@ -61,6 +66,7 @@ export class CMVimOverlay {
 
   close() {
     if (this.view) this.view.destroy();
+    if (this._unsub) { try { this._unsub(); } catch {} this._unsub = null; }
     if (this.container) this.container.remove();
     this.container = null;
     this.view = null;
@@ -113,4 +119,3 @@ export class CMVimOverlay {
     document.head.appendChild(style);
   }
 }
-
