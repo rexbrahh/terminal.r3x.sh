@@ -24,6 +24,9 @@ export class VimCommand {
       content, 
       readOnly: false,
       api: this.terminal.api,
+      preferFallback: true,
+      onOpen: () => this.terminal.pauseInput(),
+      onClose: () => this.terminal.resumeInput(),
       onSave: async (savePath, text) => {
         // Normalize and write via DBFS
         const norm = this.terminal.fs.normalizePath(savePath);

@@ -7,12 +7,13 @@ import { CMVimOverlay } from './CMVimOverlay.js';
 import { SudoOverlay } from './SudoOverlay.js';
 
 export class VimOverlay {
-  constructor({ path, content, readOnly = true, onSave = null, api = null }) {
+  constructor({ path, content, readOnly = true, onSave = null, api = null, preferFallback = true, onOpen = null, onClose = null }) {
     this.path = path;
     this.content = content || '';
     this.readOnly = !!readOnly;
     this.onSave = onSave;
     this.api = api;
+    this.preferFallback = preferFallback;
     this.container = null;
     this.canvas = null;
     this.status = null;
@@ -20,12 +21,21 @@ export class VimOverlay {
     this.closed = false;
     this.engine = null; // placeholder for wasm editor instance
     this.conflict = null;
+    this._onOpen = onOpen;
+    this._onClose = onClose;
   }
 
   async open() {
     if (this.container) return;
     this.renderShell();
+    try { if (typeof this._onOpen === 'function') this._onOpen(); } catch {}
     try {
+      const enginePref = (localStorage.getItem('editorEngine') || '').toLowerCase();
+      const preferCM = (enginePref === 'cm' || enginePref === 'codemirror') || (enginePref === '' && this.preferFallback);
+      if (preferCM) {
+        await this.fallbackToCMVim('Using fallback editor');
+        return;
+      }
       const compatMsg = await this.checkCompat();
       if (compatMsg) {
         await this.fallbackToCMVim(`Vim.wasm unsupported: ${compatMsg}`);
@@ -43,13 +53,24 @@ export class VimOverlay {
       }
 
       const canvas = document.createElement('canvas');
+      canvas.className = 'vim-canvas';
       canvas.id = 'vim-canvas';
+      canvas.tabIndex = 0;
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
       const input = document.createElement('input');
       input.id = 'vim-input';
       input.autocomplete = 'off';
       input.spellcheck = false;
       input.style.position = 'absolute';
-      input.style.left = '-10000px';
+      // Keep input in-viewport (some browsers ignore focus on offscreen inputs)
+      input.style.left = '0px';
+      input.style.top = '0px';
+      input.style.width = '1px';
+      input.style.height = '1px';
+      input.style.opacity = '0';
+      input.style.pointerEvents = 'none';
+      input.tabIndex = 0;
       this.canvas.replaceWith(canvas);
       this.canvas = canvas;
       this.container.querySelector('.vim-box').appendChild(input);
@@ -66,7 +87,12 @@ export class VimOverlay {
         this.close();
       };
       vim.onError = (err) => {
-        this.status.textContent = `Error: ${err.message}`;
+        const msg = err?.message || String(err);
+        try {
+          this.fallbackToCMVim(`Vim engine error: ${msg}`);
+        } catch (_) {
+          this.fallbackToLess(`Vim engine error: ${msg}`);
+        }
       };
       vim.onTitleUpdate = (title) => {
         this.status.textContent = `${title}`;
@@ -112,31 +138,47 @@ export class VimOverlay {
       const cmdArgs = this.readOnly ? ['-R'] : [];
       vim.start({ cmdArgs, clipboard: true });
 
-      // When not read-only, make :w trigger export automatically
-      if (!this.readOnly) {
-        const autocmd = 'autocmd BufWritePost * export';
-        setTimeout(() => {
-          vim.cmdline(autocmd).catch(() => {});
-        }, 100);
-      }
+      // Common setup: quiet startup noise and disable swapfile; map writes to export when editable
+      const setup = [
+        'set noswapfile',
+        'set shortmess+=I',
+        'set nomore',
+      ];
+      if (!this.readOnly) setup.push('autocmd BufWritePost * export');
+      setTimeout(() => {
+        setup.forEach((cmd) => vim.cmdline(cmd).catch(() => {}));
+      }, 100);
 
       // After start, drop the buffer into Vim
       const enc = new TextEncoder();
       const bytes = enc.encode(this.content || '');
       // Provide a sensible filename so modeline shows it
-      const name = this.path || 'buffer';
+      const name = (this.path || 'buffer').split('/').pop();
       // small delay to ensure worker is waiting for events
       setTimeout(() => {
-        vim.dropFile(name, bytes.buffer).catch((e) => {
+        try {
+          if (typeof vim.openFileBuffer === 'function') {
+            vim.openFileBuffer(name);
+          }
+          vim.dropFile(name, bytes.buffer).catch((e) => {
+            this.status.textContent = `Failed to open file: ${e?.message || e}`;
+          });
+        } catch (e) {
           this.status.textContent = `Failed to open file: ${e?.message || e}`;
-        });
-      }, 0);
+        }
+      }, 50);
 
-      // Focus into Vim
-      setTimeout(() => vim.focus(), 50);
+      // Focus into Vim; ensure input keeps focus on click/blur
+      setTimeout(() => { try { input.focus(); } catch {} try { vim.focus(); } catch {} }, 0);
+      this.container.addEventListener('mousedown', () => { try { input.focus(); } catch {} }, true);
+      input.addEventListener('blur', () => { setTimeout(() => { try { input.focus(); } catch {} }, 0); });
+      if (localStorage.getItem('vimOverlayDebug') === '1') {
+        input.addEventListener('keydown', (e) => console.log('[vim-input] keydown', e.key, e.code), true);
+      }
       this.engine = vim;
+      this.resize();
       this.loading = false;
-      this.status.textContent = `${this.path} — Vim ${this.readOnly ? '(read-only)' : ''} — q to quit`;
+      this.status.textContent = `${this.path} — Vim ${this.readOnly ? '(read-only)' : ''} — :q to quit`;
     } catch (e) {
       await this.fallbackToCMVim(`Failed to start Vim: ${e?.message || e}`);
     }
@@ -145,6 +187,7 @@ export class VimOverlay {
   close() {
     if (this.closed) return;
     this.closed = true;
+    try { if (typeof this._onClose === 'function') this._onClose(); } catch {}
     document.removeEventListener('keydown', this._onKeyDown, true);
     window.removeEventListener('resize', this._onResize);
     if (this.container) this.container.remove();
@@ -178,8 +221,9 @@ export class VimOverlay {
   async fallbackToCMVim(message) {
     try {
       // Try CodeMirror Vim fallback first
+      this.close();
       const cm = new CMVimOverlay({ path: this.path, content: this.content, onSave: this.onSave });
-      cm.open();
+      await cm.open();
     } catch (e) {
       this.fallbackToLess(`${message} — falling back to pager`);
     }
@@ -206,14 +250,15 @@ export class VimOverlay {
   }
 
   bindEvents() {
+    // Optional debug of event flow
+    const dbg = (localStorage.getItem('vimOverlayDebug') === '1');
+    if (dbg) {
+      const logEvt = (e) => console.log('[vim-overlay]', e.type, 'target=', e.target?.id || e.target?.className);
+      ['keydown','keypress','keyup'].forEach((t) => this.container.addEventListener(t, logEvt, true));
+    }
+
     this._onKeyDown = (e) => {
       if (!this.container) return;
-      // Minimal transport: allow quit with q/Escape even before engine is live
-      if (e.key === 'q' || e.key === 'Escape') {
-        this.close();
-        e.preventDefault();
-        return;
-      }
       // Ctrl+S to save (maps to :w then :export)
       if ((e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey)) {
         try {
@@ -231,7 +276,25 @@ export class VimOverlay {
   }
 
   resize() {
-    // In a future step, compute grid size for the engine; noop for placeholder
+    try {
+      if (!this.canvas) return;
+      const rect = this.canvas.getBoundingClientRect();
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      const cssW = Math.max(1, Math.floor(rect.width));
+      const cssH = Math.max(1, Math.floor(rect.height));
+      // Resize backing store for sharp rendering
+      if (this.canvas.width !== Math.floor(cssW * dpr)) this.canvas.width = Math.floor(cssW * dpr);
+      if (this.canvas.height !== Math.floor(cssH * dpr)) this.canvas.height = Math.floor(cssH * dpr);
+      this.canvas.style.width = cssW + 'px';
+      this.canvas.style.height = cssH + 'px';
+      // Notify engine (best effort; API differences handled defensively)
+      const w = this.engine?.worker;
+      if (w && typeof w.notifyResizeEvent === 'function') {
+        w.notifyResizeEvent(cssW, cssH);
+      } else if (this.engine && typeof this.engine.resize === 'function') {
+        this.engine.resize(cssW, cssH);
+      }
+    } catch {}
   }
 
   installStyles() {
@@ -242,7 +305,7 @@ export class VimOverlay {
       .vim-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.96); color: #00ff00; z-index: 9999; display: flex; }
       .vim-box { display: grid; grid-template-rows: auto 1fr auto; width: 100%; height: 100%; padding: 8px; box-sizing: border-box; font-family: Consolas, "Courier New", monospace; }
       .vim-title { color: #80ff80; font-size: 12px; margin-bottom: 6px; }
-      .vim-canvas { background: #000; border: 1px solid #0f0; outline: none; overflow: hidden; }
+      .vim-canvas { background: #000; border: 1px solid #0f0; outline: none; overflow: hidden; width: 100%; height: 100%; display:block; }
       .vim-status { border-top: 1px solid #0f0; margin-top: 6px; padding-top: 4px; color: #80ff80; font-size: 12px; }
       .vim-fallback-pre { white-space: pre; margin: 0; padding: 6px; height: 100%; overflow: auto; color: #00ff00; background: #000; border: 1px solid #0f0; }
       .vim-conflict { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); background: #001900; color:#d0ffd0; border:1px solid #0f0; padding: 10px; width: 440px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.6); }

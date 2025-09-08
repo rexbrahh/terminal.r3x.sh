@@ -176,21 +176,46 @@ export class DatabaseFileSystem {
                 throw new Error(typeof error === 'string' ? error : (error?.message || 'Failed'));
             }
             const updatedAt = data?.updatedAt || new Date().toISOString();
-            // reflect in local cache/structure
-            const nowItem = this.structure?.get(path);
-            if (nowItem) {
-                nowItem.content = content;
-                nowItem.updated_at = updatedAt;
-            } else if (options.allowCreate) {
-                await this.createOrUpdateFile(path, content);
-            }
-            const cacheKey = `content:${path}`;
-            this.cache.set(cacheKey, { content, timestamp: Date.now() });
+            // reflect locally without hitting DB again
+            this.updateLocalFile(path, content, updatedAt);
             return true;
         } catch (e) {
             console.error('writeFile failed', e);
             throw e;
         }
+    }
+
+    updateLocalFile(path, content, updatedAt, mime) {
+        path = this.normalizePath(path);
+        const item = this.structure?.get(path);
+        if (item) {
+            item.content = content;
+            item.updated_at = updatedAt;
+            if (mime) item.mime_type = mime;
+        } else {
+            // Create local entry (used when creating a new file via function)
+            const parent = path.split('/').slice(0, -1).join('/') || '/';
+            const name = path.split('/').pop();
+            this.structure.set(path, {
+                path,
+                type: 'file',
+                title: name,
+                content,
+                parent_path: parent === '/' ? null : parent,
+                mime_type: mime || 'text/plain',
+                created_at: updatedAt,
+                updated_at: updatedAt,
+            });
+            const parentItem = this.structure.get(parent);
+            if (parentItem && Array.isArray(parentItem.children)) {
+                if (!parentItem.children.includes(name)) {
+                    parentItem.children.push(name);
+                    parentItem.children.sort();
+                }
+            }
+        }
+        const cacheKey = `content:${path}`;
+        this.cache.set(cacheKey, { content, timestamp: Date.now() });
     }
 
     async createOrUpdateFile(path, content, meta = {}) {
