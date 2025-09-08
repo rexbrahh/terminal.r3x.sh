@@ -17,6 +17,7 @@ class TerminalSite {
     this.cursorPosition = 0;
     this.username = "guest";
     this.hostname = "r3x.sh";
+    this.bottomGapRows = 3; // extra blank rows after prompt for scroll comfort
   }
 
   async init() {
@@ -114,8 +115,19 @@ class TerminalSite {
           ? "/"
           : this.currentPath;
     const promptStr = `\x1b[32m${this.username}@${this.hostname}\x1b[0m:\x1b[34m${path}\x1b[0m$ `;
+    // Ensure viewport sits at bottom and provide a blank line before prompt
+    try { this.term.scrollToBottom(); } catch {}
     this.term.writeln("");
     this.term.write(promptStr);
+    // Inject a few blank lines after the prompt so users can scroll the prompt upward
+    // Save cursor -> write gap -> restore cursor
+    if (this.bottomGapRows > 0) {
+      try {
+        this.term.write("\x1b[s"); // save cursor
+        this.term.write("\r\n".repeat(this.bottomGapRows));
+        this.term.write("\x1b[u"); // restore cursor
+      } catch {}
+    }
     this.currentLine = "";
     this.cursorPosition = 0;
   }
