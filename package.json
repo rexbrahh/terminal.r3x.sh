@@ -2,6 +2,13 @@
   "name": "terminal.r3x.sh",
   "version": "1.0.0",
   "description": "Unix-like terminal interface for web browsing",
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "dev": "python3 scripts/dev_server.py --port 8000",
+    "dev:isolated": "python3 scripts/dev_server.py --port 8000 --isolated --coep credentialless",
+    "serve": "npx serve ."
+  },
   "keywords": [
     "terminal",
     "web-terminal",
@@ -18,17 +25,7 @@
     "url": "git+https://github.com/rexbrahh/terminal.r3x.sh.git"
   },
   "license": "MIT",
-  "author": "Rex Liu",
-  "type": "module",
-  "main": "add_samples_to_db.js",
-  "scripts": {
-    "start": "python3 -m http.server 8000",
-    "serve": "npx serve .",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
-  },
-  "devDependencies": {
-    "prettier": "^3.6.2",
-    "vim-wasm": "^0.0.13"
-  }
+  "devDependencies": {},
+  "dependencies": {}
+
 }
