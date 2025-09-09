@@ -33,7 +33,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             "default-src 'self'; "
             "connect-src 'self' https://*.supabase.co; "
             "img-src 'self' data:; "
-            "script-src 'self' 'unsafe-eval'; "
+            "script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'; "
             "style-src 'self' 'unsafe-inline'; "
             "worker-src 'self' blob:; "
             "frame-ancestors 'none'"

@@ -79,7 +79,8 @@ export class VimOverlay {
       const vim = new VimWasm({
         canvas,
         input,
-        workerScriptPath: '/vendor/vim-wasm/vim.js',
+        // Use wrapper that sets Module.locateFile so vim.data is discovered
+        workerScriptPath: '/vendor/vim-wasm/vim-worker-wrapper.js',
       });
 
       // Wire events
