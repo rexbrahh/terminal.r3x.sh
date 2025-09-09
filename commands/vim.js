@@ -1,3 +1,4 @@
+
 import { VimWorker, checkBrowserCompatibility } from '../vendor/vim-wasm/vimwasm.js';
 
 function createOverlay(statusText = 'Loading Vim… (downloads assets on first run)') {

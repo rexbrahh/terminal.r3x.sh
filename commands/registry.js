@@ -6,6 +6,7 @@ import { ClearCommand } from './clear.js';
 import { HelpCommand } from './help.js';
 import { EditorCommand } from './editor.js';
 import { StartCommand } from './start.js';
+
 import { VimCommand } from './vim.js';
 
 export class CommandRegistry {

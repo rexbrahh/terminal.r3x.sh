@@ -30,6 +30,10 @@ class SupabaseAPI {
     this.client = this.supabase;
     
     console.log('✅ Supabase client created:', this.supabase);
+
+    // Expose constants for function invocation
+    this.SUPABASE_URL = SUPABASE_URL;
+    this.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
   }
 
   async getPosts() {
@@ -99,7 +103,30 @@ class SupabaseAPI {
       return [];
     }
   }
+
+  async invokeFunction(name, body, headers = {}) {
+    try {
+      const url = `${this.SUPABASE_URL}/functions/v1/${name}`;
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
+          ...headers,
+        },
+        body: JSON.stringify(body || {}),
+      });
+      const text = await resp.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch (_) { data = text; }
+      if (!resp.ok) {
+        return { data: null, error: data || resp.statusText, status: resp.status };
+      }
+      return { data, error: null, status: resp.status };
+    } catch (e) {
+      return { data: null, error: e?.message || e, status: 0 };
+    }
+  }
 }
 
 export { SupabaseAPI };
-
