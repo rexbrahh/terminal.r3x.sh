@@ -54,8 +54,14 @@ class TerminalSite {
       this.fitAddon.fit();
     });
 
-    // Initialize filesystem before boot sequence
-    await this.fs.initialize();
+    // Initialize filesystem before boot sequence, but don't block UI if it fails
+    let fsInitError = null;
+    try {
+      await this.fs.initialize();
+    } catch (e) {
+      fsInitError = e;
+      console.error('Filesystem initialization failed; continuing without DB', e);
+    }
     
     // Run boot sequence instead of displayWelcome
     const bootSequence = new BootSequence(this.term);
@@ -63,6 +69,13 @@ class TerminalSite {
     
     // Only set up handlers and prompt after boot sequence
     this.setupEventHandlers();
+    if (fsInitError) {
+      try {
+        this.term.writeln('');
+        this.term.writeln('\x1b[31mDatabase unavailable. Running with limited filesystem.\x1b[0m');
+        this.term.writeln('\x1b[90mCheck CSP and Supabase connectivity in production.\x1b[0m');
+      } catch {}
+    }
     this.prompt();
   }
 
