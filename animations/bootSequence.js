@@ -86,7 +86,14 @@ class BootSequence {
       // Add pause before clearing
       await this.randomPause(500, 800);
 
-      // Clear and show final state
+      // Clear screen so only final state remains
+      try {
+        this.terminal.reset();
+        this.terminal.write('\x1b[2J\x1b[3J\x1b[H');
+        this.terminal.clear();
+      } catch {}
+
+      // Show final state
       this.showFinalState();
     } finally {
       this.cleanup();
@@ -376,4 +383,3 @@ class BootSequence {
 }
 
 export default BootSequence;
-

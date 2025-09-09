@@ -45,7 +45,11 @@ COMMON_CFLAGS="-O3 -fno-exceptions -sWASMFS=1 -sFORCE_FILESYSTEM=1 -sALLOW_MEMOR
 COMMON_LDFLAGS="-O3 -sWASM=1 -sWASMFS=1 -sFORCE_FILESYSTEM=1 -sALLOW_MEMORY_GROWTH=1 -sENVIRONMENT=web -sEXIT_RUNTIME=1 -sMODULARIZE=1 -sEXPORT_NAME=ShellModule -sEXPORTED_RUNTIME_METHODS=['callMain'] -sINVOKE_RUN=0"
 
 echo "Running oldconfig..."
-yes "" | make oldconfig >/dev/null
+# yes exits with SIGPIPE when the consumer stops reading; with pipefail this would
+# fail the build. Temporarily relax pipefail around this pipeline.
+set +o pipefail || true
+yes "" | make oldconfig >/dev/null || true
+set -o pipefail || true
 
 echo "Building BusyBox with Emscripten... (this may take a while)"
 make -j"$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)" \
