@@ -12,6 +12,9 @@ import { ShCommand } from './sh.js';
 import { ShPutCommand } from './shput.js';
 import { ShGetCommand } from './shget.js';
 import { ViewCommand } from './view.js';
+import { ShLsCommand } from './shls.js';
+import { ShEnvCommand } from './shenv.js';
+import { HealthCommand } from './health.js';
 
 export class CommandRegistry {
     constructor(terminal) {
@@ -33,7 +36,10 @@ export class CommandRegistry {
         this.register('sh', new ShCommand(this.terminal));
         this.register('shput', new ShPutCommand(this.terminal));
         this.register('shget', new ShGetCommand(this.terminal));
+        this.register('shls', new ShLsCommand(this.terminal));
+        this.register('shenv', new ShEnvCommand(this.terminal));
         this.register('view', new ViewCommand(this.terminal));
+        this.register('health', new HealthCommand(this.terminal));
         
         // Aliases
         this.register('ll', new LsCommand(this.terminal, { detailed: true }));

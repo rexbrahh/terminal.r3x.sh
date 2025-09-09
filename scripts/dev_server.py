@@ -33,7 +33,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             "default-src 'self'; "
             "connect-src 'self' https://*.supabase.co; "
             "img-src 'self' data:; "
-            "script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'; "
+            # Allow esm.sh for CodeMirror fallback in dev only
+            "script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval' https://esm.sh; "
             "style-src 'self' 'unsafe-inline'; "
             "worker-src 'self' blob:; "
             "frame-ancestors 'none'"

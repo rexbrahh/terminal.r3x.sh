@@ -24,6 +24,8 @@ export class VimCommand {
       path,
       content,
       readOnly: false,
+      // Prefer real Vim by default; CM fallback only if user explicitly sets it
+      preferFallback: false,
       api: this.terminal.api,
       onOpen: () => this.terminal.pauseInput(),
       onClose: () => this.terminal.resumeInput(),
