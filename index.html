@@ -4,25 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>terminal.r3x.sh</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+    <link rel="stylesheet" href="vendor/cdn/xterm/xterm.css">
     <link rel="stylesheet" href="styles/terminal.css">
 </head>
 <body>
     <div id="terminal-container"></div>
-    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Terminal-first libraries for proper file rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/chalk@5.3.0/index.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/string-width@7.0.0/index.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/cli-table3@0.6.3/index.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
-    <!-- Keep some useful libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
+    <script src="vendor/cdn/xterm/xterm.js"></script>
+    <script src="vendor/cdn/xterm-addon-fit/xterm-addon-fit.js"></script>
+    <script src="vendor/cdn/marked/marked.min.js"></script>
+    <script src="vendor/cdn/supabase/supabase.umd.js"></script>
+    <!-- Optional libraries with fallbacks in code -->
+    <script src="vendor/cdn/papaparse/papaparse.min.js"></script>
+    <script src="vendor/cdn/js-yaml/js-yaml.min.js"></script>
+    <script src="vendor/cdn/jszip/jszip.min.js"></script>
+    <script src="vendor/cdn/dompurify/purify.min.js"></script>
     <script type="module" src="terminal.js"></script>
 </body>
 </html>
