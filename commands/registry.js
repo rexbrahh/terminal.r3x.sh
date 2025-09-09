@@ -8,6 +8,9 @@ import { EditorCommand } from './editor.js';
 import { StartCommand } from './start.js';
 
 import { VimCommand } from './vim.js';
+import { ShCommand } from './sh.js';
+import { ShPutCommand } from './shput.js';
+import { ShGetCommand } from './shget.js';
 import { ViewCommand } from './view.js';
 
 export class CommandRegistry {
@@ -27,6 +30,9 @@ export class CommandRegistry {
         this.register('start', new StartCommand(this.terminal));
         this.register('editor', new EditorCommand(this.terminal));
         this.register('vim', new VimCommand(this.terminal));
+        this.register('sh', new ShCommand(this.terminal));
+        this.register('shput', new ShPutCommand(this.terminal));
+        this.register('shget', new ShGetCommand(this.terminal));
         this.register('view', new ViewCommand(this.terminal));
         
         // Aliases
