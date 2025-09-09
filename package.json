@@ -16,8 +16,16 @@
     "command-line",
     "portfolio"
   ],
-  "author": "Rex Liu",
+  "homepage": "https://github.com/rexbrahh/terminal.r3x.sh#readme",
+  "bugs": {
+    "url": "https://github.com/rexbrahh/terminal.r3x.sh/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rexbrahh/terminal.r3x.sh.git"
+  },
   "license": "MIT",
   "devDependencies": {},
   "dependencies": {}
+
 }
