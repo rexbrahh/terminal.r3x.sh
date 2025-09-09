@@ -11,7 +11,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Prepare env
         run: |
           set -euxo pipefail
@@ -41,6 +40,5 @@ jobs:
           name: wasm-shell-artifacts
           path: |
             wasm-shell/shell.js
-            wasm-shell/shell.wasm
             build-log.txt
             wasm-shell/busybox.config
