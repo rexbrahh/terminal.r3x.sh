@@ -28,8 +28,9 @@
 
       const Module = {
         locateFile: (p) => '/wasm-shell/' + p,
-        print: (txt) => write(String(txt) + '\n'),
-        printErr: (txt) => write('\x1b[31m' + String(txt) + '\x1b[0m\n'),
+        // Do not force newlines; pass through exactly what the program prints
+        print: (txt) => write(String(txt)),
+        printErr: (txt) => write('\x1b[31m' + String(txt) + '\x1b[0m'),
         onExit: (code) => self.postMessage({ type: 'exit', code }),
         onAbort: (reason) => self.postMessage({ type: 'error', message: String(reason || 'abort') }),
         stdin: () => {
