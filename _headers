@@ -7,4 +7,4 @@
   *.supabase.co https://*.supabase.in; img-src 'self' data:; script-src 'self' 'wasm-
   unsafe-eval'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; frame-ancestors
   'none'
-
+*
