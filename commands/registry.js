@@ -12,6 +12,7 @@ import { ShCommand } from './sh.js';
 import { ShPutCommand } from './shput.js';
 import { ShGetCommand } from './shget.js';
 import { ViewCommand } from './view.js';
+import { ShLsCommand } from './shls.js';
 
 export class CommandRegistry {
     constructor(terminal) {
@@ -33,6 +34,7 @@ export class CommandRegistry {
         this.register('sh', new ShCommand(this.terminal));
         this.register('shput', new ShPutCommand(this.terminal));
         this.register('shget', new ShGetCommand(this.terminal));
+        this.register('shls', new ShLsCommand(this.terminal));
         this.register('view', new ViewCommand(this.terminal));
         
         // Aliases
