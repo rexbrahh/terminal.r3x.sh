@@ -77,6 +77,13 @@ class TerminalSite {
       } catch {}
     }
     this.prompt();
+    // Optional: auto-start WASM shell if user opted in
+    try {
+      const auto = localStorage.getItem('shellOnBoot');
+      if (auto === '1' || auto === 'true') {
+        await this.commands.execute('sh', []);
+      }
+    } catch {}
   }
 
   displayWelcome() {

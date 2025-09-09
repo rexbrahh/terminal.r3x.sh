@@ -15,6 +15,7 @@ import { ViewCommand } from './view.js';
 import { ShLsCommand } from './shls.js';
 import { ShEnvCommand } from './shenv.js';
 import { HealthCommand } from './health.js';
+import { SiteCtlCommand } from './sitectl.js';
 
 export class CommandRegistry {
     constructor(terminal) {
@@ -40,6 +41,7 @@ export class CommandRegistry {
         this.register('shenv', new ShEnvCommand(this.terminal));
         this.register('view', new ViewCommand(this.terminal));
         this.register('health', new HealthCommand(this.terminal));
+        this.register('sitectl', new SiteCtlCommand(this.terminal));
         
         // Aliases
         this.register('ll', new LsCommand(this.terminal, { detailed: true }));
