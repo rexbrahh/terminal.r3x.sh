@@ -16,8 +16,14 @@
   let fsReady = false;
   let FS = null;
 
+  function nl2crlf(s) {
+    if (!s) return s;
+    // Normalize bare LF to CRLF so xterm renders lines correctly
+    return String(s).replace(/\r?\n/g, "\r\n");
+  }
+
   function write(text) {
-    self.postMessage({ type: 'stdout', data: text });
+    self.postMessage({ type: 'stdout', data: nl2crlf(text) });
   }
 
   // ---------------- Real WASM shell path ----------------
@@ -28,8 +34,9 @@
 
       const Module = {
         locateFile: (p) => '/wasm-shell/' + p,
-        print: (txt) => write(String(txt) + '\n'),
-        printErr: (txt) => write('\x1b[31m' + String(txt) + '\x1b[0m\n'),
+        // Do not force newlines; pass through exactly what the program prints
+        print: (txt) => write(String(txt)),
+        printErr: (txt) => write('\x1b[31m' + String(txt) + '\x1b[0m'),
         onExit: (code) => self.postMessage({ type: 'exit', code }),
         onAbort: (reason) => self.postMessage({ type: 'error', message: String(reason || 'abort') }),
         stdin: () => {
@@ -57,6 +64,8 @@
               FS.syncfs(true, function(err){
                 if (err) write('\x1b[31mIDBFS sync error: ' + (err.message||err) + '\x1b[0m\n');
                 fsReady = true;
+                // Ask the main thread for a snapshot of the site FS to mount read-only at /site
+                try { self.postMessage({ type: 'sitefs:request' }); } catch {}
                 startMain();
               });
               return;
@@ -252,6 +261,28 @@
         case 'fs-put': return onFsPut(m);
         case 'fs-get': return onFsGet(m);
         case 'fs-list': return onFsList(m);
+        case 'sitefs:snapshot': {
+          try {
+            if (!FS) break;
+            try { FS.mkdir('/site'); } catch {}
+            const items = m.items || [];
+            for (const it of items) {
+              const p = '/site' + (it.path === '/' ? '' : it.path);
+              if (it.type === 'directory') {
+                try { FS.mkdirTree(p); } catch {}
+              } else if (it.type === 'file') {
+                const dir = p.split('/').slice(0, -1).join('/') || '/';
+                try { FS.mkdirTree(dir); } catch {}
+                const data = typeof it.content === 'string' ? encoder.encode(it.content) : new Uint8Array(it.content || []);
+                FS.writeFile(p, data);
+              }
+            }
+            write('\r\n[site mounted at /site]\r\n');
+          } catch (e) {
+            self.postMessage({ type: 'error', message: 'sitefs mount failed: ' + (e?.message||e) });
+          }
+          return;
+        }
         case 'env-get': {
           try {
             if (usingWasm && typeof Module !== 'undefined' && Module.ENV) {

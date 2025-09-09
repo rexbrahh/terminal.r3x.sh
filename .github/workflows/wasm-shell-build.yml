@@ -11,11 +11,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Build BusyBox to WASM
+      - name: Prepare env
         run: |
-          git config --global --add safe.directory $GITHUB_WORKSPACE
-          bash scripts/build_busybox_wasm.sh
+          set -euxo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          emcc -v || true
+          # Remove any previous stub to avoid confusing results
+          rm -f wasm-shell/shell.js wasm-shell/shell.wasm || true
+
+      - name: Build BusyBox → WASM
+        run: |
+          set -euxo pipefail
+          bash -x scripts/build_busybox_wasm.sh 2>&1 | tee build-log.txt
+          ls -lh wasm-shell || true
+          # Fail fast if shim text is present or files missing
+          test -f wasm-shell/shell.js
+          ! grep -q "Minimal JS-based ShellModule shim" wasm-shell/shell.js || (echo "Stub detected; build did not run" && exit 2)
+
+      - name: Show artifact sizes
+        run: |
+          set -euxo pipefail
+          du -h wasm-shell/shell.js || true
+          du -h wasm-shell/shell.wasm || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -23,5 +40,5 @@ jobs:
           name: wasm-shell-artifacts
           path: |
             wasm-shell/shell.js
-            wasm-shell/shell.wasm
-
+            build-log.txt
+            wasm-shell/busybox.config
