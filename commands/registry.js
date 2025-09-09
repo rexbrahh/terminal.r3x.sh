@@ -6,14 +6,8 @@ import { ClearCommand } from './clear.js';
 import { HelpCommand } from './help.js';
 import { EditorCommand } from './editor.js';
 import { StartCommand } from './start.js';
-import { FileCommand } from './file.js';
-import { HeadCommand } from './head.js';
-import { TailCommand } from './tail.js';
-import { DownloadCommand } from './download.js';
-import { LessCommand } from './less.js';
-import { ViewCommand } from './view.js';
+
 import { VimCommand } from './vim.js';
-import { SudoCommand } from './sudo.js';
 
 export class CommandRegistry {
     constructor(terminal) {
@@ -31,6 +25,7 @@ export class CommandRegistry {
         this.register('help', new HelpCommand(this.terminal));
         this.register('start', new StartCommand(this.terminal));
         this.register('editor', new EditorCommand(this.terminal));
+        this.register('vim', new VimCommand(this.terminal));
         
         // Aliases
         this.register('ll', new LsCommand(this.terminal, { detailed: true }));
