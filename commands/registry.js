@@ -8,6 +8,7 @@ import { EditorCommand } from './editor.js';
 import { StartCommand } from './start.js';
 
 import { VimCommand } from './vim.js';
+import { ViewCommand } from './view.js';
 
 export class CommandRegistry {
     constructor(terminal) {
@@ -26,6 +27,7 @@ export class CommandRegistry {
         this.register('start', new StartCommand(this.terminal));
         this.register('editor', new EditorCommand(this.terminal));
         this.register('vim', new VimCommand(this.terminal));
+        this.register('view', new ViewCommand(this.terminal));
         
         // Aliases
         this.register('ll', new LsCommand(this.terminal, { detailed: true }));
