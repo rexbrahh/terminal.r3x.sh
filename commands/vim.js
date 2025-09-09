@@ -1,47 +1,4 @@
-let __vimLoaderPromise = null;
-
-function ensureVimLoaded() {
-  if (window.__vimReady) return window.__vimReady;
-  if (__vimLoaderPromise) return __vimLoaderPromise;
-
-  __vimLoaderPromise = new Promise((resolve, reject) => {
-    // Configure Module so vim.js can find its assets and canvas
-    const VENDOR_BASE = (window.__VIM_VENDOR_BASE) || 'vendor/vim-wasm/';
-    const canvas = document.createElement('canvas');
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-    canvas.style.display = 'block';
-    canvas.id = 'vim-canvas';
-
-    // We attach canvas later when overlay is created; keep a ref
-    window.__vimCanvas = canvas;
-
-    window.Module = window.Module || {};
-    window.Module.locateFile = (path, prefix) => `${VENDOR_BASE}${path}`;
-    // Help some browsers by specifying wasm binary path explicitly
-    window.Module.wasmBinaryFile = `${VENDOR_BASE}vim.wasm`;
-    window.Module.canvas = canvas;
-    window.Module.onRuntimeInitialized = () => {
-      window.__vimRuntimeReady = true;
-      resolve(window.Module);
-    };
-    // Optional status hook; we log to console for visibility
-    window.Module.setStatus = (msg) => {
-      console.debug('[vim] ', msg);
-    };
-
-    const script = document.createElement('script');
-    script.src = `${VENDOR_BASE}vim.js`;
-    script.onload = () => {
-      // vim.js will call onRuntimeInitialized when ready
-    };
-    script.onerror = (e) => reject(new Error('Failed to load Vim (WASM) script'));
-    document.head.appendChild(script);
-  });
-
-  window.__vimReady = __vimLoaderPromise;
-  return __vimLoaderPromise;
-}
+import { VimWorker, checkBrowserCompatibility } from '../vendor/vim-wasm/vimwasm.js';
 
 function createOverlay(statusText = 'Loading Vim… (downloads assets on first run)') {
   const overlay = document.createElement('div');
@@ -131,70 +88,213 @@ export class VimCommand {
       // Non-existent file: open a new buffer (ephemeral)
       content = '';
     }
-
     // Create overlay early so user sees progress
     const { canvas, title } = createOverlay();
 
-    // Ensure runtime is loaded
-    try {
-      title.textContent = 'Vim (WASM) — Initializing runtime…';
-      await ensureVimLoaded();
-      title.textContent = 'Vim (WASM) — Starting… (:q to quit)';
-    } catch (e) {
-      teardownOverlay();
-      return `vim: failed to load Vim (WASM): ${e.message}\r\n`;
+    // Environment check: SharedArrayBuffer + cross-origin isolation
+    const compatError = checkBrowserCompatibility && checkBrowserCompatibility();
+    if (compatError || !('crossOriginIsolated' in window && window.crossOriginIsolated)) {
+      const msg = [
+        'vim: environment not isolated for WASM runtime.',
+        'Required: COOP same-origin + COEP credentialless/require-corp.',
+        'Try: npm run dev:isolated (or deploy with _headers).',
+        'Fallback: use "editor cm" for CodeMirror-based editor.',
+      ].join('\r\n');
+      title.textContent = 'Vim (WASM) — requires cross-origin isolation';
+      setTimeout(() => teardownOverlay(), 1500);
+      return msg + '\r\n';
     }
 
-    // Mount canvas for Module
-    window.Module.canvas = canvas;
+    title.textContent = 'Vim (WASM) — Starting… (:q to quit)';
 
-    // Prepare in-memory file for Vim to edit
-    const fname = path.split('/').pop();
-    const mountDir = '/home/web_user';
-    const filePath = `${mountDir}/${fname}`;
+    // Canvas setup
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const domW = Math.max(1, Math.floor(rect.width));
+    const domH = Math.max(1, Math.floor(rect.height));
+    canvas.width = Math.max(1, Math.floor(domW * dpr));
+    canvas.height = Math.max(1, Math.floor(domH * dpr));
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.imageSmoothingEnabled = false;
 
-    try {
-      const enc = new TextEncoder();
-      const bytes = enc.encode(String(content));
-      if (!window.Module.FS_analyzePath(mountDir).exists) {
-        window.Module.FS_createPath('/', 'home', true, true);
-        window.Module.FS_createPath('/home', 'web_user', true, true);
-      }
-      // Overwrite if exists
-      if (window.Module.FS_analyzePath(filePath).exists) {
-        window.Module.FS_unlink(filePath);
-      }
-      window.Module.FS_createDataFile(mountDir, fname, bytes, true, true);
-    } catch (err) {
-      teardownOverlay();
-      return `vim: failed to prepare buffer: ${err.message}\r\n`;
-    }
-
-    // Observe exit to clean overlay and optionally sync content back
-    const previousOnExit = window.Module.onExit;
-    window.Module.onExit = (status) => {
-      try {
-        // Read back content (best-effort; non-persistent FS)
-        if (window.Module.FS_analyzePath(filePath).exists) {
-          const out = window.Module.FS_readFile(filePath, { encoding: 'utf8' });
-          // DatabaseFileSystem is read-only; we just print a note
-          console.log(`[vim] Edited content length: ${out.length}`);
-        }
-      } catch (e) {
-        console.warn('[vim] Unable to read back file:', e);
-      }
-      teardownOverlay();
-      if (typeof previousOnExit === 'function') previousOnExit(status);
+    // Simple draw state
+    const state = {
+      fg: '#c0c0c0',
+      bg: '#000000',
+      sp: '#ff0000',
+      fontName: 'monospace',
+      fontSize: 16,
+    };
+    const applyFont = (bold=false) => {
+      const w = bold ? 'bold ' : '';
+      ctx.font = `${w}${state.fontSize}px ${state.fontName}`;
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = state.fg;
     };
 
-    // Start Vim with the file
-    try {
-      window.Module.callMain([filePath]);
-      return '';
-    } catch (e) {
-      teardownOverlay();
-      return `vim: failed to start: ${e.message}\r\n`;
-    }
+    // Wire Vim worker
+    let exiting = false;
+    const worker = new VimWorker('vendor/vim-wasm/vim.js', async (msg) => {
+      switch (msg.kind) {
+        case 'started':
+          title.textContent = 'Vim (WASM) — running (:q to quit)';
+          break;
+        case 'title':
+          if (msg.title) title.textContent = `Vim (WASM) — ${msg.title}`;
+          break;
+        case 'exit':
+          exiting = true;
+          teardownOverlay();
+          break;
+        case 'error':
+          console.error('[vim]', msg.message);
+          title.textContent = 'Vim (WASM) — error (see console)';
+          break;
+        case 'read-clipboard:request':
+          try {
+            const text = await navigator.clipboard.readText();
+            await worker.responseClipboardText(text);
+          } catch (e) {
+            worker.notifyClipboardError();
+          }
+          break;
+        case 'write-clipboard':
+          if (msg.text != null) {
+            try { await navigator.clipboard.writeText(msg.text); } catch {}
+          }
+          break;
+        case 'export':
+          // File export request from Vim (e.g., :w somefile)
+          // We don't persist; just log for now.
+          console.log('[vim export]', msg.path, msg.contents);
+          break;
+        case 'draw': {
+          const [op, params] = msg.event || [];
+          try {
+            switch (op) {
+              case 'drawRect': {
+                const [x, y, w, h, color, filled] = params;
+                if (filled) {
+                  ctx.fillStyle = color || state.bg;
+                  ctx.fillRect(x, y, w, h);
+                } else {
+                  ctx.strokeStyle = color || state.fg;
+                  ctx.strokeRect(x, y, w, h);
+                }
+                break;
+              }
+              case 'drawText': {
+                const [text, charHeight, lineHeight, charWidth, x, y, bold, underline, undercurl, strike] = params;
+                applyFont(!!bold);
+                ctx.fillStyle = state.fg;
+                ctx.fillText(text, x, y);
+                if (underline) {
+                  ctx.strokeStyle = state.fg;
+                  ctx.beginPath();
+                  ctx.moveTo(x, y + charHeight - 1);
+                  ctx.lineTo(x + text.length * charWidth, y + charHeight - 1);
+                  ctx.stroke();
+                }
+                if (strike) {
+                  ctx.strokeStyle = state.fg;
+                  ctx.beginPath();
+                  ctx.moveTo(x, y + charHeight / 2);
+                  ctx.lineTo(x + text.length * charWidth, y + charHeight / 2);
+                  ctx.stroke();
+                }
+                break;
+              }
+              case 'imageScroll': {
+                const [x, sy, dy, w, h] = params;
+                ctx.drawImage(canvas, x, sy, w, h, x, dy, w, h);
+                break;
+              }
+              case 'invertRect': {
+                const [x, y, w, h] = params;
+                const img = ctx.getImageData(x, y, w, h);
+                const d = img.data;
+                for (let i = 0; i < d.length; i += 4) {
+                  d[i] = 255 - d[i];
+                  d[i+1] = 255 - d[i+1];
+                  d[i+2] = 255 - d[i+2];
+                }
+                ctx.putImageData(img, x, y);
+                break;
+              }
+              case 'setColorBG':
+                state.bg = params[0];
+                break;
+              case 'setColorFG':
+                state.fg = params[0];
+                break;
+              case 'setColorSP':
+                state.sp = params[0];
+                break;
+              case 'setFont': {
+                const [name, size] = params;
+                state.fontName = name || 'monospace';
+                state.fontSize = size || 16;
+                break;
+              }
+              default:
+                console.debug('[vim draw] unknown op', op, params);
+            }
+          } catch (e) {
+            console.warn('[vim draw] failed op', op, e);
+          }
+          break;
+        }
+        case 'done':
+          // event completed; no-op
+          break;
+        default:
+          console.debug('[vim msg]', msg);
+      }
+    }, (e) => {
+      console.error('[vim worker error]', e);
+      if (!exiting) title.textContent = 'Vim (WASM) — worker crashed';
+    });
+
+    // Keyboard events
+    const keyHandler = (e) => {
+      e.preventDefault();
+      worker.notifyKeyEvent(e.key, e.keyCode || e.which || 0, e.ctrlKey, e.shiftKey, e.altKey, e.metaKey);
+    };
+    window.__vimOverlay.addEventListener('keydown', keyHandler, { capture: true });
+
+    // Resize handling
+    const ro = new ResizeObserver(() => {
+      const r = canvas.getBoundingClientRect();
+      const w = Math.max(1, Math.floor(r.width));
+      const h = Math.max(1, Math.floor(r.height));
+      canvas.width = Math.max(1, Math.floor(w * dpr));
+      canvas.height = Math.max(1, Math.floor(h * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      worker.notifyResizeEvent(w, h);
+    });
+    ro.observe(canvas);
+
+    // Start worker
+    const fname = path.split('/').pop();
+    const filePath = `/home/web_user/${fname}`;
+    const files = {};
+    files[filePath] = String(content);
+    worker.sendStartMessage({
+      kind: 'start',
+      buffer: worker.sharedBuffer,
+      canvasDomWidth: domW,
+      canvasDomHeight: domH,
+      perf: false,
+      clipboard: true,
+      persistent: [],
+      dirs: ['/home/web_user'],
+      files,
+      fetchFiles: [],
+      cmdArgs: [filePath],
+    });
+
+    return '';
   }
 
   getHelp() {

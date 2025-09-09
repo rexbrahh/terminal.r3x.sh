@@ -9,8 +9,9 @@ import mimetypes
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
-    def __init__(self, *args, isolated=False, **kwargs):
+    def __init__(self, *args, isolated=False, coep_policy='credentialless', **kwargs):
         self.isolated = isolated
+        self.coep_policy = coep_policy
         # Ensure proper MIME types
         mimetypes.add_type('application/wasm', '.wasm')
         mimetypes.add_type('application/octet-stream', '.data')
@@ -23,7 +24,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if self.isolated:
             # Cross-origin isolation headers for WASM/SharedArrayBuffer
             self.send_header('Cross-Origin-Opener-Policy', 'same-origin')
-            self.send_header('Cross-Origin-Embedder-Policy', 'require-corp')
+            self.send_header('Cross-Origin-Embedder-Policy', self.coep_policy)
             # Mark same-origin assets as embeddable
             self.send_header('Cross-Origin-Resource-Policy', 'same-origin')
 
@@ -61,12 +62,13 @@ def main():
     parser = argparse.ArgumentParser(description='Dev server with COOP/COEP and WASM support')
     parser.add_argument('--port', type=int, default=8000)
     parser.add_argument('--host', default='127.0.0.1')
-    parser.add_argument('--isolated', action='store_true', help='Enable COOP/COEP (requires all scripts/styles/fonts loaded from this origin)')
+    parser.add_argument('--isolated', action='store_true', help='Enable COOP/COEP (crossOriginIsolated) headers')
+    parser.add_argument('--coep', choices=['require-corp','credentialless'], default='credentialless', help='COEP policy when isolated')
     parser.add_argument('--root', default='.')
     args = parser.parse_args()
 
     os.chdir(args.root)
-    handler_factory = lambda *h_args, **h_kwargs: Handler(*h_args, isolated=args.isolated, **h_kwargs)
+    handler_factory = lambda *h_args, **h_kwargs: Handler(*h_args, isolated=args.isolated, coep_policy=args.coep, **h_kwargs)
 
     # Try the requested port first, then search the next 20 ports.
     httpd, chosen_port = try_bind(args.host, args.port, handler_factory)

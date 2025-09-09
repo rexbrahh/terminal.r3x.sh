@@ -6,7 +6,7 @@
   "scripts": {
     "start": "python3 -m http.server 8000",
     "dev": "python3 scripts/dev_server.py --port 8000",
-    "dev:isolated": "python3 scripts/dev_server.py --port 8000 --isolated",
+    "dev:isolated": "python3 scripts/dev_server.py --port 8000 --isolated --coep credentialless",
     "serve": "npx serve ."
   },
   "keywords": [
