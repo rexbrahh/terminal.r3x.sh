@@ -20,6 +20,12 @@ SRC_DIR="$DEPS_DIR/toybox"
 
 mkdir -p "$DEPS_DIR" "$OUT_DIR"
 
+# Ensure emsdk is available if emcc is missing
+if ! command -v emcc >/dev/null 2>&1; then
+  echo "No emcc found; attempting to set up emsdk locally..."
+  source "$(cd "$(dirname "$0")" && pwd)/setup_emsdk.sh"
+fi
+
 if [[ ! -d "$SRC_DIR/.git" ]]; then
   echo "Cloning Toybox..."
   git clone --depth 1 https://github.com/landley/toybox.git "$SRC_DIR"
@@ -36,10 +42,23 @@ make defconfig >/dev/null
 # Toybox tries to use Linux-only headers for some applets; enable a portable set.
 # We'll force Emscripten toolchain via env, and compile a reduced feature set.
 
-export CC=emcc
-export LD=emcc
-export AR=emar
-export RANLIB=emranlib
+export CC="emcc"
+export LD="emcc"
+export AR="emar"
+export RANLIB="emranlib"
+# Prefer GNU sed on macOS for Toybox's sed scripts
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  if command -v gsed >/dev/null 2>&1; then
+    export SED="gsed"
+  else
+    export SED="sed"
+  fi
+fi
+
+# Apply tiny Emscripten compatibility patch (stubs for xnotify/mount list)
+if ! grep -q "__EMSCRIPTEN__ compatibility stubs" lib/portability.c 2>/dev/null; then
+  bash "$ROOT_DIR/scripts/patch_toybox_for_emscripten.sh" lib/portability.c || true
+fi
 
 # Common flags for Emscripten browser builds
 EM_FLAGS=(
@@ -49,6 +68,10 @@ EM_FLAGS=(
   -sALLOW_MEMORY_GROWTH=1
   -sENVIRONMENT=web
   -sEXIT_RUNTIME=1
+  -sMODULARIZE=1
+  -sEXPORT_NAME=ShellModule
+  -sEXPORTED_RUNTIME_METHODS='["callMain"]'
+  -sINVOKE_RUN=0
 )
 
 echo "Building Toybox (this may take a minute)..."
@@ -73,8 +96,7 @@ else
   # As a fallback, link whatever 'toybox' binary was produced via emcc
   if [[ -f toybox ]]; then
     echo "Linking toybox with emcc → JS/WASM..."
-    emcc "${EM_FLAGS[@]}" -sMODULARIZE=1 -sEXPORT_NAME=ShellModule \
-      -sEXPORTED_RUNTIME_METHODS='["callMain"]' -sINVOKE_RUN=0 \
+    emcc "${EM_FLAGS[@]}" \
       -o "$OUT_DIR/shell.js" toybox || { echo 'emcc link failed'; exit 4; }
   else
     echo "Could not find Emscripten outputs (a.out.js or toybox.js)."
@@ -84,4 +106,3 @@ else
 fi
 
 echo "Built: $OUT_DIR/shell.js (and shell.wasm). Try: npm run dev and 'sh' in the app."
-

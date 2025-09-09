@@ -74,8 +74,10 @@
         try {
           write('\x1b[2J\x1b[H');
           write('WASM shell starting...\r\n');
-          if (Module.callMain) Module.callMain(['ash']);
-          else if (self.Module && self.Module.callMain) self.Module.callMain(['ash']);
+          // Prefer POSIX sh (Toybox), fall back to ash (BusyBox)
+          const startArgs = ['sh'];
+          if (Module.callMain) Module.callMain(startArgs);
+          else if (self.Module && self.Module.callMain) self.Module.callMain(startArgs);
         } catch (e) {
           self.postMessage({ type: 'error', message: e?.message || String(e) });
         }
@@ -99,6 +101,7 @@
   const state = {
     buffer: '',
     prompt: 'guest@wasm:~$ ',
+    env: { HOME: '/home/web_user', TERM: 'xterm-256color' },
   };
 
   function printPrompt() { write(state.prompt); }
@@ -162,6 +165,9 @@
   async function onStart(msg) {
     cols = msg.cols || cols;
     rows = msg.rows || rows;
+    // Keep JS stub env in sync
+    state.env.COLUMNS = String(cols);
+    state.env.LINES = String(rows);
     const ok = await tryStartWasmShell();
     if (ok) return; // wasm path will print its own banner
     // Fallback banner
@@ -181,6 +187,7 @@
   function onResize(msg) {
     cols = msg.cols || cols;
     rows = msg.rows || rows;
+    if (!usingWasm) { state.env.COLUMNS = String(cols); state.env.LINES = String(rows); }
   }
 
   function onSignal(msg) {
@@ -245,6 +252,18 @@
         case 'fs-put': return onFsPut(m);
         case 'fs-get': return onFsGet(m);
         case 'fs-list': return onFsList(m);
+        case 'env-get': {
+          try {
+            if (usingWasm && typeof Module !== 'undefined' && Module.ENV) {
+              self.postMessage({ type: 'env-get:result', env: Object.assign({}, Module.ENV) });
+            } else {
+              self.postMessage({ type: 'env-get:result', env: Object.assign({}, state.env) });
+            }
+          } catch (e) {
+            self.postMessage({ type: 'error', message: 'env-get error: ' + (e?.message||e) });
+          }
+          return;
+        }
         default: return self.postMessage({ type: 'error', message: `unknown msg: ${m.type}` });
       }
     } catch (e) {

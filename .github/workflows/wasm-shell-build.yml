@@ -1,0 +1,27 @@
+name: wasm-shell-build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: emscripten/emsdk:latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build BusyBox to WASM
+        run: |
+          git config --global --add safe.directory $GITHUB_WORKSPACE
+          bash scripts/build_busybox_wasm.sh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-shell-artifacts
+          path: |
+            wasm-shell/shell.js
+            wasm-shell/shell.wasm
+
