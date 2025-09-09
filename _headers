@@ -1,9 +1,6 @@
-  /*
+/*
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Embedder-Policy: require-corp
   Cross-Origin-Resource-Policy: same-site
   X-Content-Type-Options: nosniff
-  Content-Security-Policy: default-src 'self'; connect-src 'self' https://.supabase.co
-  https://.supabase.in; img-src 'self' data:; script-src 'self' 'wasm-unsafe-eval'; style-
-  src 'self' 'unsafe-inline'; worker-src 'self' blob:; frame-ancestors 'none'
-
+  Content-Security-Policy: default-src 'self'; connect-src 'self' https://*.supabase.co https://*.supabase.in; img-src 'self' data:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; frame-ancestors 'none'
