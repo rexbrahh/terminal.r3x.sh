@@ -3,21 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self'; frame-ancestors 'none'; base-uri 'self';">
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
+    <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
+    <meta http-equiv="Cross-Origin-Resource-Policy" content="same-origin">
     <title>terminal.r3x.sh</title>
-    <link rel="stylesheet" href="vendor/cdn/xterm/xterm.css">
-    <link rel="stylesheet" href="styles/terminal.css">
+    <link rel="stylesheet" href="vendor/cdn/xterm/xterm.css" integrity="sha384-LJcOxlx9IMbNXDqJ2axpfEQKkAYbFjJfhXexLfiRJhjDU81mzgkiQq8rkV0j6dVh" crossorigin="anonymous">
+    <link rel="stylesheet" href="styles/terminal.css" integrity="sha384-GYcrgNpxuM5G2hCNOtsyDtyJtZOaCQ/aorpb8YlfwVyM/sHRnQvwSdt/priKCZ57">
 </head>
 <body>
     <div id="terminal-container"></div>
-    <script src="vendor/cdn/xterm/xterm.js"></script>
-    <script src="vendor/cdn/xterm-addon-fit/xterm-addon-fit.js"></script>
-    <script src="vendor/cdn/marked/marked.min.js"></script>
-    <script src="vendor/cdn/supabase/supabase.umd.js"></script>
+    <script src="vendor/cdn/xterm/xterm.js" integrity="sha384-/nfmYPUzWMS6v2atn8hbljz7NE0EI1iGx34lJaNzyVjWGDzMv+ciUZUeJpKA3Glc" crossorigin="anonymous"></script>
+    <script src="vendor/cdn/xterm-addon-fit/xterm-addon-fit.js" integrity="sha384-AQLWHRKAgdTxkolJcLOELg4E9rE89CPE2xMy3tIRFn08NcGKPTsELdvKomqji+DL" crossorigin="anonymous"></script>
+    <script src="vendor/cdn/marked/marked.min.js" integrity="sha384-NNQgBjjuhtXzPmmy4gurS5X7P4uTt1DThyevz4Ua0IVK5+kazYQI1W27JHjbbxQz" crossorigin="anonymous"></script>
+    <script src="vendor/cdn/supabase/supabase.umd.js" integrity="sha384-EZRwc2/vqPPOVy0E9SfIfE4c2Z2ABwr8PDozHdWtcvQ657xGYTzXLD9VJIO362bD" crossorigin="anonymous"></script>
     <!-- Optional libraries with fallbacks in code -->
-    <script src="vendor/cdn/papaparse/papaparse.min.js"></script>
-    <script src="vendor/cdn/js-yaml/js-yaml.min.js"></script>
-    <script src="vendor/cdn/jszip/jszip.min.js"></script>
-    <script src="vendor/cdn/dompurify/purify.min.js"></script>
-    <script type="module" src="terminal.js"></script>
+    <script src="vendor/cdn/papaparse/papaparse.min.js" integrity="sha384-D/t0ZMqQW31H3az8ktEiNb39wyKnS82iFY52QPACM+IjKW3jDUhyIgh2PApRqJZs" crossorigin="anonymous"></script>
+    <script src="vendor/cdn/js-yaml/js-yaml.min.js" integrity="sha384-+pxiN6T7yvpryuJmE1gM9PX7yQit15auDb+ZwwvJOd/4be2Cie5/IuVXgQb/S9du" crossorigin="anonymous"></script>
+    <script src="vendor/cdn/jszip/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous"></script>
+    <script src="vendor/cdn/dompurify/purify.min.js" integrity="sha384-7J9LZClCmyfMdWlmHNx4NRnfBq4ItHC6PYXiNLcv1yklj8hmrZBs1Yo+qpHUX8eE" crossorigin="anonymous"></script>
+    <script type="module" src="terminal.js" integrity="sha384-8ovZ6UWqC7LniAqFRfqIWx/Irw0dc/pvFCkY9W5fgPEO59tQClPnKK6T76VMWYvj" crossorigin="anonymous"></script>
 </body>
 </html>
