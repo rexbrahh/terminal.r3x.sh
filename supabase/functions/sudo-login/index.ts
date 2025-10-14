@@ -1,16 +1,21 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { create, getNumericDate } from "https://deno.land/x/djwt@v2.9/mod.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Environment
 const PWD_HMAC_HEX = Deno.env.get("SUDO_PASSWORD_HMAC") || ""; // hex(HMAC_SHA256(password, KEY))
-const KEY_CONF = Deno.env.get("SUDO_PASSWORD_KEY") || "";       // key string; may be hex or plain text
-const TOKEN_SECRET = Deno.env.get("SUDO_TOKEN_SECRET") || "";    // HS256 secret for session token
+const KEY_CONF = Deno.env.get("SUDO_PASSWORD_KEY") || ""; // key string; may be hex or plain text
+const TOKEN_SECRET = Deno.env.get("SUDO_TOKEN_SECRET") || ""; // HS256 secret for session token
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const RATE_LIMIT_WINDOW_SECONDS = Number(Deno.env.get("SUDO_RATE_WINDOW_SECONDS") || "60");
+const RATE_LIMIT_MAX_ATTEMPTS = Number(Deno.env.get("SUDO_RATE_MAX_ATTEMPTS") || "5");
 const ALLOWED = (Deno.env.get("ALLOWED_ORIGINS") || "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
 
-if (!PWD_HMAC_HEX || !KEY_HEX || !TOKEN_SECRET) {
+if (!PWD_HMAC_HEX || !KEY_CONF || !TOKEN_SECRET) {
   console.error("Missing env: SUDO_PASSWORD_HMAC, SUDO_PASSWORD_KEY, or SUDO_TOKEN_SECRET");
 }
 
@@ -69,6 +74,45 @@ function timingSafeEqHex(a: string, b: string) {
   return diff === 0;
 }
 
+function getClientIp(req: Request) {
+  const forwarded = req.headers.get("x-forwarded-for") || "";
+  const forwardedIp = forwarded.split(",")[0]?.trim();
+  return (
+    req.headers.get("cf-connecting-ip")
+    || req.headers.get("x-real-ip")
+    || (forwardedIp || "")
+  );
+}
+
+async function hashIdentifier(input: string) {
+  const data = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function computeFingerprint(req: Request) {
+  const ip = getClientIp(req) || "unknown-ip";
+  const ua = req.headers.get("user-agent") || "";
+  return await hashIdentifier(`${ip}|${ua}`);
+}
+
+async function recordAttempt(
+  supabase: any,
+  payload: { fingerprint: string; origin: string; outcome: string; blocked?: boolean },
+) {
+  if (!supabase) return;
+  try {
+    await supabase.from("sudo_attempts").insert({
+      fingerprint: payload.fingerprint,
+      origin: payload.origin || null,
+      outcome: payload.outcome,
+      blocked: payload.blocked ?? false,
+    });
+  } catch (e) {
+    console.error("sudo-login: attempt log failed", e);
+  }
+}
+
 serve(async (req) => {
   const origin = req.headers.get("origin") || "";
   if (req.method === "OPTIONS") {
@@ -77,12 +121,47 @@ serve(async (req) => {
   if (req.method !== "POST") return json(405, { error: "method" }, origin);
   if (ALLOWED.length && !ALLOWED.includes(origin)) return json(403, { error: "origin" }, origin);
 
+  const supabase = SUPABASE_URL && SERVICE_ROLE ? createClient(SUPABASE_URL, SERVICE_ROLE) : null;
+
+  let fingerprint = "";
+  try {
+    fingerprint = await computeFingerprint(req);
+  } catch (e) {
+    console.error("sudo-login: fingerprint failed", e);
+  }
+
+  if (supabase && fingerprint) {
+    const windowStartIso = new Date(Date.now() - RATE_LIMIT_WINDOW_SECONDS * 1000).toISOString();
+    try {
+      const { count, error } = await supabase
+        .from("sudo_attempts")
+        .select("id", { count: "exact", head: true })
+        .eq("fingerprint", fingerprint)
+        .gte("created_at", windowStartIso);
+      if (!error && typeof count === "number" && count >= RATE_LIMIT_MAX_ATTEMPTS) {
+        await recordAttempt(supabase, { fingerprint, origin, outcome: "blocked", blocked: true });
+        return json(429, { error: "rate_limit", retryAfter: RATE_LIMIT_WINDOW_SECONDS }, origin);
+      }
+      if (error) console.error("sudo-login: rate limit query failed", error);
+    } catch (e) {
+      console.error("sudo-login: rate limit lookup failed", e);
+    }
+  }
+
   const { password } = await req.json().catch(() => ({}));
   if (!password) return json(400, { error: "password" }, origin);
 
   try {
     const given = await hmacHex(password, KEY_CONF);
-    if (!timingSafeEqHex(given, PWD_HMAC_HEX)) return json(401, { error: "auth" }, origin);
+    const success = timingSafeEqHex(given, PWD_HMAC_HEX);
+    if (fingerprint && supabase) {
+      await recordAttempt(supabase, {
+        fingerprint,
+        origin,
+        outcome: success ? "success" : "failure",
+      });
+    }
+    if (!success) return json(401, { error: "auth" }, origin);
 
     const jti = crypto.randomUUID();
     const exp = getNumericDate(10 * 60); // 10 minutes
